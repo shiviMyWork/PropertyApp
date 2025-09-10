@@ -6,42 +6,44 @@ import {
   TouchableOpacity,
   Dimensions,
   StatusBar,
-  SafeAreaView,
+  useColorScheme,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from 'react-native-paper';
 import { Svg, Circle, Path, G } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
 
 // Custom Moon and Star Icon Component
-const MoonStarIcon = () => (
+const MoonStarIcon = ({ isDark }) => (
   <Svg width="120" height="120" viewBox="0 0 100 100">
-    <Circle cx="50" cy="50" r="45" fill="#4A5568" opacity="0.3" />
+    <Circle cx="50" cy="50" r="45" fill={isDark ? "#374151" : "#4A5568"} opacity="0.3" />
     {/* Stars */}
-    <Circle cx="30" cy="25" r="1.5" fill="white" />
-    <Circle cx="70" cy="20" r="1" fill="white" />
-    <Circle cx="75" cy="35" r="1.2" fill="white" />
-    <Circle cx="25" cy="40" r="1" fill="white" />
-    <Circle cx="80" cy="60" r="1.3" fill="white" />
-    <Circle cx="20" cy="65" r="1" fill="white" />
+    <Circle cx="30" cy="25" r="1.5" fill={isDark ? "#F9FAFB" : "white"} />
+    <Circle cx="70" cy="20" r="1" fill={isDark ? "#F9FAFB" : "white"} />
+    <Circle cx="75" cy="35" r="1.2" fill={isDark ? "#F9FAFB" : "white"} />
+    <Circle cx="25" cy="40" r="1" fill={isDark ? "#F9FAFB" : "white"} />
+    <Circle cx="80" cy="60" r="1.3" fill={isDark ? "#F9FAFB" : "white"} />
+    <Circle cx="20" cy="65" r="1" fill={isDark ? "#F9FAFB" : "white"} />
     {/* Moon */}
     <Path
       d="M35 25 C35 40, 50 50, 65 50 C50 65, 30 55, 35 25 Z"
-      fill="white"
+      fill={isDark ? "#F9FAFB" : "white"}
     />
     {/* House silhouette */}
     <Path
       d="M40 70 L40 85 L60 85 L60 70 L65 75 L50 60 L35 75 Z"
-      fill="#9CA3AF"
+      fill={isDark ? "#6B7280" : "#9CA3AF"}
     />
   </Svg>
 );
 
 // Custom Search Alert Icon Component
-const SearchAlertIcon = () => (
+const SearchAlertIcon = ({ isDark }) => (
   <Svg width="120" height="120" viewBox="0 0 120 100">
     {/* Magnifying glass */}
-    <Circle cx="35" cy="35" r="20" fill="#6B7280" stroke="white" strokeWidth="2" />
-    <Path d="M50 50 L60 60" stroke="white" strokeWidth="3" strokeLinecap="round" />
+    <Circle cx="35" cy="35" r="20" fill={isDark ? "#4B5563" : "#6B7280"} stroke={isDark ? "#F9FAFB" : "white"} strokeWidth="2" />
+    <Path d="M50 50 L60 60" stroke={isDark ? "#F9FAFB" : "white"} strokeWidth="3" strokeLinecap="round" />
     
     {/* Star inside magnifying glass */}
     <Path
@@ -54,7 +56,7 @@ const SearchAlertIcon = () => (
       d="M70 55 L70 70 L85 70 L85 55 L90 60 L77.5 45 L65 60 Z"
       fill="#DC2626"
     />
-    <Path d="M75 62 L75 68 L80 68 L80 62 Z" fill="white" />
+    <Path d="M75 62 L75 68 L80 68 L80 62 Z" fill={isDark ? "#F9FAFB" : "white"} />
     
     {/* House 2 */}
     <Path
@@ -68,19 +70,57 @@ const SearchAlertIcon = () => (
     
     {/* Notification dot */}
     <Circle cx="90" cy="30" r="8" fill="#FCD34D" />
-    <Text x="90" y="35" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">!</Text>
+    <Text x="90" y="35" textAnchor="middle" fill={isDark ? "#1F2937" : "white"} fontSize="10" fontWeight="bold">!</Text>
   </Svg>
 );
 
-const PropertySearchApp = () => {
+const SavedScreen = () => {
   const [activeTab, setActiveTab] = useState(0);
+  const theme = useTheme();
+  const scheme = useColorScheme();
+
+  // Dynamic styles based on theme
+  const dynamicStyles = {
+    container: {
+      backgroundColor: scheme === 'light' ? '#FFFFFF' : theme.colors.background,
+    },
+    tabContainer: {
+      backgroundColor: scheme === 'light' ? '#F9FAFB' : theme.colors.elevation.level1,
+      borderBottomColor: scheme === 'light' ? '#E5E7EB' : theme.colors.outline,
+    },
+    contentContainer: {
+      backgroundColor: scheme === 'light' ? '#FFFFFF' : theme.colors.background,
+    },
+    tabText: {
+      color: scheme === 'light' ? '#6B7280' : theme.colors.onSurfaceVariant,
+    },
+    activeTabText: {
+      color: scheme === 'light' ? '#1F2937' : theme.colors.onSurface,
+    },
+    mainTitle: {
+      color: scheme === 'light' ? '#1F2937' : theme.colors.onSurface,
+    },
+    description: {
+      color: scheme === 'light' ? '#6B7280' : theme.colors.onSurfaceVariant,
+    },
+    signInButton: {
+      borderColor: scheme === 'light' ? '#D1D5DB' : theme.colors.outline,
+    },
+    signInButtonText: {
+      color: scheme === 'light' ? '#374151' : theme.colors.onSurface,
+    },
+  };
 
   const TabButton = ({ title, isActive, onPress }) => (
     <TouchableOpacity
       style={[styles.tabButton, isActive && styles.activeTab]}
       onPress={onPress}
     >
-      <Text style={[styles.tabText, isActive && styles.activeTabText]}>
+      <Text style={[
+        styles.tabText, 
+        dynamicStyles.tabText,
+        isActive && [styles.activeTabText, dynamicStyles.activeTabText]
+      ]}>
         {title}
       </Text>
     </TouchableOpacity>
@@ -89,12 +129,12 @@ const PropertySearchApp = () => {
   const SavesPropertiesTab = () => (
     <View style={styles.tabContent}>
       <View style={styles.iconContainer}>
-        <MoonStarIcon />
+        <MoonStarIcon isDark={scheme === 'dark'} />
       </View>
       
-      <Text style={styles.mainTitle}>Save your favorite homes</Text>
+      <Text style={[styles.mainTitle, dynamicStyles.mainTitle]}>Save your favorite homes</Text>
       
-      <Text style={styles.description}>
+      <Text style={[styles.description, dynamicStyles.description]}>
         Start adding your favorite homes and stay updated on contacted agents and much more.
       </Text>
       
@@ -107,27 +147,30 @@ const PropertySearchApp = () => {
   const SearchAlertTab = () => (
     <View style={styles.tabContent}>
       <View style={styles.iconContainer}>
-        <SearchAlertIcon />
+        <SearchAlertIcon isDark={scheme === 'dark'} />
       </View>
       
-      <Text style={styles.mainTitle}>Never miss a property</Text>
+      <Text style={[styles.mainTitle, dynamicStyles.mainTitle]}>Never miss a property</Text>
       
-      <Text style={styles.description}>
+      <Text style={[styles.description, dynamicStyles.description]}>
         Create an alert to be notified when there are new properties matching your criteria.
       </Text>
       
-      <TouchableOpacity style={styles.signInButton}>
-        <Text style={styles.signInButtonText}>Sign up or log in</Text>
+      <TouchableOpacity style={[styles.signInButton, dynamicStyles.signInButton]}>
+        <Text style={[styles.signInButtonText, dynamicStyles.signInButtonText]}>Sign up or log in</Text>
       </TouchableOpacity>
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000" />
+    <SafeAreaView style={[styles.container, dynamicStyles.container]}>
+      <StatusBar 
+        barStyle={scheme === 'light' ? 'dark-content' : 'light-content'} 
+        backgroundColor={scheme === 'light' ? '#FFFFFF' : theme.colors.background} 
+      />
       
       {/* Tab Headers */}
-      <View style={styles.tabContainer}>
+      <View style={[styles.tabContainer, dynamicStyles.tabContainer]}>
         <TabButton
           title="Saves properties"
           isActive={activeTab === 0}
@@ -141,7 +184,7 @@ const PropertySearchApp = () => {
       </View>
 
       {/* Tab Content */}
-      <View style={styles.contentContainer}>
+      <View style={[styles.contentContainer, dynamicStyles.contentContainer]}>
         {activeTab === 0 ? <SavesPropertiesTab /> : <SearchAlertTab />}
       </View>
     </SafeAreaView>
@@ -151,16 +194,11 @@ const PropertySearchApp = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    marginTop:42,
-
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#F9FAFB',
     paddingTop: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
   },
   tabButton: {
     flex: 1,
@@ -173,17 +211,14 @@ const styles = StyleSheet.create({
     borderBottomColor: '#DC2626',
   },
   tabText: {
-    color: '#6B7280',
     fontSize: 16,
     fontWeight: '500',
   },
   activeTabText: {
-    color: '#1F2937',
     fontWeight: '600',
   },
   contentContainer: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   tabContent: {
     flex: 1,
@@ -195,14 +230,12 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   mainTitle: {
-    color: '#1F2937',
     fontSize: 24,
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: 20,
   },
   description: {
-    color: '#6B7280',
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 24,
@@ -224,18 +257,16 @@ const styles = StyleSheet.create({
   signInButton: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
     paddingHorizontal: 30,
     paddingVertical: 15,
     borderRadius: 8,
     minWidth: 150,
   },
   signInButtonText: {
-    color: '#374151',
     fontSize: 16,
     fontWeight: '500',
     textAlign: 'center',
   },
 });
 
-export default PropertySearchApp;
+export default SavedScreen;

@@ -1,7 +1,5 @@
-// App.js
 import React, { useState } from 'react';
 import {
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -10,12 +8,17 @@ import {
   TouchableOpacity,
   Dimensions,
   Animated,
+  useColorScheme,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from 'react-native-paper';
 
 const { width } = Dimensions.get('window');
 
-const App = () => {
+const AccountScreen = () => {
   const [pressedItem, setPressedItem] = useState(null);
+  const theme = useTheme();
+  const scheme = useColorScheme();
 
   const handlePress = (item) => {
     console.log(`Pressed: ${item}`);
@@ -23,68 +26,91 @@ const App = () => {
     setTimeout(() => setPressedItem(null), 150);
   };
 
+  // Dynamic styles based on theme
+  const dynamicStyles = {
+    container: {
+      backgroundColor: scheme === 'light' ? '#fafbfc' : theme.colors.background,
+    },
+    cardBackground: {
+      backgroundColor: scheme === 'light' ? '#ffffff' : theme.colors.elevation.level1,
+    },
+    primaryText: {
+      color: scheme === 'light' ? '#1a1a1a' : theme.colors.onSurface,
+    },
+    secondaryText: {
+      color: scheme === 'light' ? '#666666' : theme.colors.onSurfaceVariant,
+    },
+    separator: {
+      backgroundColor: scheme === 'light' ? '#f0f0f0' : theme.colors.outline,
+    },
+    pressedRow: {
+      backgroundColor: scheme === 'light' ? '#f5f5f5' : theme.colors.elevation.level2,
+    },
+    iconContainer: {
+      backgroundColor: scheme === 'light' ? '#f8f9fa' : theme.colors.elevation.level2,
+    },
+    profileIcon: {
+      backgroundColor: scheme === 'light' ? '#e3f2fd' : theme.colors.primaryContainer,
+    },
+    arrow: {
+      color: scheme === 'light' ? '#bbb' : theme.colors.outline,
+    },
+  };
+
   const MenuRow = ({ title, subtitle, onPress, showArrow = true, icon }) => (
     <TouchableOpacity 
       style={[
         styles.menuRow,
-        pressedItem === title && styles.menuRowPressed
+        pressedItem === title && [styles.menuRowPressed, dynamicStyles.pressedRow]
       ]} 
       onPress={() => onPress(title)}
       activeOpacity={0.7}
     >
       <View style={styles.menuRowLeft}>
         {icon && (
-          <View style={styles.iconContainer}>
+          <View style={[styles.iconContainer, dynamicStyles.iconContainer]}>
             <Text style={styles.iconText}>{icon}</Text>
           </View>
         )}
         <View style={styles.menuRowContent}>
-          <Text style={styles.menuTitle}>{title}</Text>
-          {subtitle && <Text style={styles.menuSubtitle}>{subtitle}</Text>}
+          <Text style={[styles.menuTitle, dynamicStyles.primaryText]}>{title}</Text>
+          {subtitle && <Text style={[styles.menuSubtitle, dynamicStyles.secondaryText]}>{subtitle}</Text>}
         </View>
       </View>
       {showArrow && (
         <View style={styles.arrowContainer}>
-          <Text style={styles.arrow}>›</Text>
+          <Text style={[styles.arrow, dynamicStyles.arrow]}>›</Text>
         </View>
       )}
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fafbfc" />
+    <SafeAreaView style={[styles.container, dynamicStyles.container]}>
+      <StatusBar 
+        barStyle={scheme === 'light' ? 'dark-content' : 'light-content'} 
+        backgroundColor={scheme === 'light' ? '#fafbfc' : theme.colors.background} 
+      />
       
-      {/* Header */}
-      {/* <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <TouchableOpacity style={styles.settingsButton}>
-          <Text style={styles.settingsIcon}>⚙️</Text>
-        </TouchableOpacity>
-      </View> */}
-
       <ScrollView 
         contentInsetAdjustmentBehavior="automatic" 
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
         
-        {/* Sign up/Log in Card */}
-        <View style={styles.signupCard}>
+        {/* Profile Card */}
+        <View style={[styles.signupCard, dynamicStyles.cardBackground]}>
           <View style={styles.profileSection}>
-            <View style={styles.profileIcon}>
+            <View style={[styles.profileIcon, dynamicStyles.profileIcon]}>
               <Text style={styles.profileText}>👤</Text>
             </View>
             <View style={styles.signupContent}>
-              <Text style={styles.signupTitle}>UserName</Text>
-              <Text style={styles.signupSubtitle}>
+              <Text style={[styles.signupTitle, dynamicStyles.primaryText]}>UserName</Text>
+              <Text style={[styles.signupSubtitle, dynamicStyles.secondaryText]}>
                 Save searches, sync properties, and get personalized recommendations
               </Text>
             </View>
           </View>
-          {/* <TouchableOpacity style={styles.signupButton} onPress={() => handlePress('signup')}>
-            <Text style={styles.signupButtonText}>Get Started</Text>
-          </TouchableOpacity> */}
         </View>
 
         {/* Property Listing Promotion */}
@@ -98,9 +124,6 @@ const App = () => {
           <View style={styles.propertyContent}>
             <View style={styles.propertyTextSection}>
               <Text style={styles.propertyTitle}>Want to list your property with us?</Text>
-              {/* <Text style={styles.propertySubtitle}>
-                Reach millions of buyers and renters
-              </Text> */}
               <TouchableOpacity 
                 style={styles.getStartedButton} 
                 onPress={() => handlePress('get started')}
@@ -116,29 +139,29 @@ const App = () => {
 
         {/* Settings Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Preferences</Text>
-          <View style={styles.menuContainer}>
+          <Text style={[styles.sectionTitle, dynamicStyles.primaryText]}>Preferences</Text>
+          <View style={[styles.menuContainer, dynamicStyles.cardBackground]}>
             <MenuRow
               title="Language"
               subtitle="English (US)"
               icon="🌐"
               onPress={handlePress}
             />
-            <View style={styles.separator} />
+            <View style={[styles.separator, dynamicStyles.separator]} />
             <MenuRow
               title="Country"
               subtitle="Egypt"
               icon="🌍"
               onPress={handlePress}
             />
-            <View style={styles.separator} />
+            <View style={[styles.separator, dynamicStyles.separator]} />
             <MenuRow
               title="Measurement"
               subtitle="Imperial (ft², mi)"
               icon="📏"
               onPress={handlePress}
             />
-            <View style={styles.separator} />
+            <View style={[styles.separator, dynamicStyles.separator]} />
             <MenuRow
               title="Notifications"
               subtitle="Push, Email"
@@ -150,22 +173,22 @@ const App = () => {
 
         {/* Real Estate Resources Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Real Estate Services</Text>
-          <View style={styles.menuContainer}>
+          <Text style={[styles.sectionTitle, dynamicStyles.primaryText]}>Real Estate Services</Text>
+          <View style={[styles.menuContainer, dynamicStyles.cardBackground]}>
             <MenuRow
               title="Find a Broker"
               subtitle="Connect with local experts"
               icon="🏢"
               onPress={handlePress}
             />
-            <View style={styles.separator} />
+            <View style={[styles.separator, dynamicStyles.separator]} />
             <MenuRow
               title="Market Insights"
               subtitle="Trends and analytics"
               icon="📊"
               onPress={handlePress}
             />
-            <View style={styles.separator} />
+            <View style={[styles.separator, dynamicStyles.separator]} />
             <MenuRow
               title="Mortgage Calculator"
               subtitle="Estimate your payments"
@@ -177,22 +200,22 @@ const App = () => {
 
         {/* Property Finder Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Support</Text>
-          <View style={styles.menuContainer}>
+          <Text style={[styles.sectionTitle, dynamicStyles.primaryText]}>Support</Text>
+          <View style={[styles.menuContainer, dynamicStyles.cardBackground]}>
             <MenuRow
               title="Help Center"
               subtitle="FAQs and guides"
               icon="❓"
               onPress={handlePress}
             />
-            <View style={styles.separator} />
+            <View style={[styles.separator, dynamicStyles.separator]} />
             <MenuRow
               title="Contact Us"
               subtitle="Get in touch"
               icon="📞"
               onPress={handlePress}
             />
-            <View style={styles.separator} />
+            <View style={[styles.separator, dynamicStyles.separator]} />
             <MenuRow
               title="About"
               subtitle="Learn more about us"
@@ -204,8 +227,8 @@ const App = () => {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Property Finder v2.1.0</Text>
-          <Text style={styles.footerSubtext}>Made with ❤️ for property seekers</Text>
+          {/* <Text style={styles.footerText}>Property Finder v2.1.0</Text>
+          <Text style={styles.footerSubtext}>Made with ❤️ for property seekers</Text> */}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -215,8 +238,6 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fafbfc',
-    marginTop:42,
   },
   header: {
     flexDirection: 'row',
@@ -224,20 +245,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#1a1a1a',
   },
   settingsButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#f8f9fa',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -248,7 +266,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   signupCard: {
-    backgroundColor: '#ffffff',
     margin: 20,
     paddingHorizontal: 14,
     paddingVertical: 14,
@@ -268,7 +285,6 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#e3f2fd',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -280,13 +296,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   signupTitle: {
-    color: '#1a1a1a',
     fontSize: 20,
     fontWeight: '700',
     marginBottom: 6,
   },
   signupSubtitle: {
-    color: '#666666',
     fontSize: 15,
     lineHeight: 22,
   },
@@ -387,14 +401,12 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   sectionTitle: {
-    color: '#1a1a1a',
     fontSize: 22,
     fontWeight: '700',
     marginBottom: 16,
     paddingLeft: 4,
   },
   menuContainer: {
-    backgroundColor: '#ffffff',
     borderRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -410,7 +422,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   menuRowPressed: {
-    backgroundColor: '#f5f5f5',
+    // Dynamic color applied via dynamicStyles
   },
   menuRowLeft: {
     flexDirection: 'row',
@@ -421,7 +433,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#f8f9fa',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -433,13 +444,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   menuTitle: {
-    color: '#1a1a1a',
     fontSize: 17,
     fontWeight: '600',
     marginBottom: 3,
   },
   menuSubtitle: {
-    color: '#666666',
     fontSize: 14,
     lineHeight: 18,
   },
@@ -450,13 +459,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   arrow: {
-    color: '#bbb',
     fontSize: 22,
     fontWeight: '300',
   },
   separator: {
     height: 1,
-    backgroundColor: '#f0f0f0',
     marginLeft: 76,
   },
   footer: {
@@ -476,4 +483,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default App;
+export default AccountScreen;

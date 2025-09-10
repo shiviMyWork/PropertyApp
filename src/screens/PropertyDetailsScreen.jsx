@@ -10,17 +10,61 @@ import {
   StatusBar,
   Linking,
   FlatList,
+  useColorScheme,
 } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from 'react-native-paper';
 
 const { width } = Dimensions.get('window');
 
-const PropertyListingApp = () => {
+const PropertyDetailsScreen = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('1Y');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
   const imageSliderRef = useRef(null);
   const autoScrollIntervalRef = useRef(null);
+  const theme = useTheme();
+  const scheme = useColorScheme();
+
+  // Dynamic styles based on theme
+  const dynamicStyles = {
+    container: {
+      backgroundColor: scheme === 'light' ? '#ffffff' : theme.colors.background,
+    },
+    priceSection: {
+      backgroundColor: scheme === 'light' ? '#f9fafb' : theme.colors.elevation.level1,
+    },
+    section: {
+      borderTopColor: scheme === 'light' ? '#e5e7eb' : theme.colors.outline,
+    },
+    primaryText: {
+      color: scheme === 'light' ? '#111827' : theme.colors.onSurface,
+    },
+    secondaryText: {
+      color: scheme === 'light' ? '#6b7280' : theme.colors.onSurfaceVariant,
+    },
+    cardBackground: {
+      backgroundColor: scheme === 'light' ? '#f9fafb' : theme.colors.elevation.level2,
+      borderColor: scheme === 'light' ? '#e5e7eb' : theme.colors.outline,
+    },
+    locationCard: {
+      backgroundColor: scheme === 'light' ? '#f3f4f6' : theme.colors.elevation.level1,
+      borderColor: scheme === 'light' ? '#e5e7eb' : theme.colors.outline,
+    },
+    detailRow: {
+      borderBottomColor: scheme === 'light' ? '#e5e7eb' : theme.colors.outline,
+    },
+    periodButton: {
+      backgroundColor: scheme === 'light' ? '#f3f4f6' : theme.colors.elevation.level1,
+      borderColor: scheme === 'light' ? '#e5e7eb' : theme.colors.outline,
+    },
+    bottomActions: {
+      backgroundColor: scheme === 'light' ? '#ffffff' : theme.colors.background,
+      borderTopColor: scheme === 'light' ? '#e5e7eb' : theme.colors.outline,
+    },
+    chartBackground: scheme === 'light' ? '#f9fafb' : theme.colors.elevation.level1,
+  };
 
   // Sample property data
   const propertyData = {
@@ -220,13 +264,16 @@ const PropertyListingApp = () => {
   const renderAmenityItem = (amenity, index) => (
     <View key={index} style={styles.amenityItem}>
       <Text style={styles.amenityIcon}>{amenity.icon}</Text>
-      <Text style={styles.amenityText}>{amenity.name}</Text>
+      <Text style={[styles.amenityText, { color: scheme === 'light' ? '#4b5563' : theme.colors.onSurfaceVariant }]}>{amenity.name}</Text>
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+    <SafeAreaView style={[styles.container, dynamicStyles.container]}>
+      <StatusBar 
+        barStyle={scheme === 'light' ? 'dark-content' : 'light-content'} 
+        backgroundColor={scheme === 'light' ? '#ffffff' : theme.colors.background} 
+      />
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header Image Slider */}
         <View style={styles.imageContainer}>
@@ -242,24 +289,6 @@ const PropertyListingApp = () => {
             onTouchEnd={onTouchEnd}
             keyExtractor={(item, index) => index.toString()}
           />
-          
-          
-       
-          
-          {/* Navigation Arrows */}
-          <TouchableOpacity 
-            style={[styles.navButton, styles.navButtonLeft]} 
-            onPress={goToPrevImage}
-          >
-            <Text style={styles.navButtonText}>‹</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.navButton, styles.navButtonRight]} 
-            onPress={goToNextImage}
-          >
-            <Text style={styles.navButtonText}>›</Text>
-          </TouchableOpacity>
 
           {/* Image Counter */}
           <View style={styles.imageCounter}>
@@ -283,18 +312,18 @@ const PropertyListingApp = () => {
         </View>
 
         {/* Price Section */}
-        <View style={styles.priceSection}>
-          <Text style={styles.price}>{propertyData.price}</Text>
-          <Text style={styles.title}>{propertyData.title}</Text>
+        <View style={[styles.priceSection, dynamicStyles.priceSection]}>
+          <Text style={[styles.price, dynamicStyles.primaryText]}>{propertyData.price}</Text>
+          <Text style={[styles.title, dynamicStyles.secondaryText]}>{propertyData.title}</Text>
           <TouchableOpacity style={styles.mapButton}>
             <Text style={styles.mapButtonText}>📍 View on map</Text>
           </TouchableOpacity>
         </View>
 
         {/* Description */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Description</Text>
-          <Text style={styles.description}>
+        <View style={[styles.section, dynamicStyles.section]}>
+          <Text style={[styles.sectionTitle, dynamicStyles.primaryText]}>Description</Text>
+          <Text style={[styles.description, dynamicStyles.secondaryText]}>
             studio fully furnished for rent near by AUC{'\n'}
             one bedroom{'\n'}
             one bathroom{'\n'}
@@ -307,28 +336,28 @@ const PropertyListingApp = () => {
         </View>
 
         {/* Property Details */}
-        <View style={styles.section}>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>🏠 Property Type:</Text>
-            <Text style={styles.detailValue}>{propertyData.propertyType}</Text>
+        <View style={[styles.section, dynamicStyles.section]}>
+          <View style={[styles.detailRow, dynamicStyles.detailRow]}>
+            <Text style={[styles.detailLabel, dynamicStyles.secondaryText]}>🏠 Property Type:</Text>
+            <Text style={[styles.detailValue, dynamicStyles.primaryText]}>{propertyData.propertyType}</Text>
           </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>📐 Property Size:</Text>
-            <Text style={styles.detailValue}>{propertyData.size}</Text>
+          <View style={[styles.detailRow, dynamicStyles.detailRow]}>
+            <Text style={[styles.detailLabel, dynamicStyles.secondaryText]}>📐 Property Size:</Text>
+            <Text style={[styles.detailValue, dynamicStyles.primaryText]}>{propertyData.size}</Text>
           </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>🛏️ Bedrooms:</Text>
-            <Text style={styles.detailValue}>{propertyData.bedrooms}</Text>
+          <View style={[styles.detailRow, dynamicStyles.detailRow]}>
+            <Text style={[styles.detailLabel, dynamicStyles.secondaryText]}>🛏️ Bedrooms:</Text>
+            <Text style={[styles.detailValue, dynamicStyles.primaryText]}>{propertyData.bedrooms}</Text>
           </View>
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>🚿 Bathrooms:</Text>
-            <Text style={styles.detailValue}>{propertyData.bathrooms}</Text>
+          <View style={[styles.detailRow, dynamicStyles.detailRow]}>
+            <Text style={[styles.detailLabel, dynamicStyles.secondaryText]}>🚿 Bathrooms:</Text>
+            <Text style={[styles.detailValue, dynamicStyles.primaryText]}>{propertyData.bathrooms}</Text>
           </View>
         </View>
 
         {/* Amenities */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Amenities</Text>
+        <View style={[styles.section, dynamicStyles.section]}>
+          <Text style={[styles.sectionTitle, dynamicStyles.primaryText]}>Amenities</Text>
           <View style={styles.amenitiesGrid}>
             {propertyData.amenities.map((amenity, index) => 
               renderAmenityItem(amenity, index)
@@ -337,11 +366,11 @@ const PropertyListingApp = () => {
         </View>
 
         {/* Location */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Location & nearby</Text>
-          <View style={styles.locationCard}>
-            <Text style={styles.locationTitle}>American University Housing District</Text>
-            <Text style={styles.locationSubtitle}>
+        <View style={[styles.section, dynamicStyles.section]}>
+          <Text style={[styles.sectionTitle, dynamicStyles.primaryText]}>Location & nearby</Text>
+          <View style={[styles.locationCard, dynamicStyles.locationCard]}>
+            <Text style={[styles.locationTitle, dynamicStyles.primaryText]}>American University Housing District</Text>
+            <Text style={[styles.locationSubtitle, dynamicStyles.secondaryText]}>
               📍 District, 5th Settlement Compounds, The 5th Settlement, ...
             </Text>
             <TouchableOpacity style={styles.viewMapButton}>
@@ -351,9 +380,9 @@ const PropertyListingApp = () => {
         </View>
 
         {/* Prices & Trends */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Prices & Trends</Text>
-          <Text style={styles.chartSubtitle}>
+        <View style={[styles.section, dynamicStyles.section]}>
+          <Text style={[styles.sectionTitle, dynamicStyles.primaryText]}>Prices & Trends</Text>
+          <Text style={[styles.chartSubtitle, dynamicStyles.secondaryText]}>
             Studio apartment rented in New Cairo City and Cairo
           </Text>
           
@@ -363,12 +392,14 @@ const PropertyListingApp = () => {
                 key={period}
                 style={[
                   styles.periodButton,
+                  dynamicStyles.periodButton,
                   selectedPeriod === period && styles.periodButtonActive
                 ]}
                 onPress={() => setSelectedPeriod(period)}
               >
                 <Text style={[
                   styles.periodButtonText,
+                  { color: scheme === 'light' ? '#6b7280' : theme.colors.onSurfaceVariant },
                   selectedPeriod === period && styles.periodButtonTextActive
                 ]}>{period}</Text>
               </TouchableOpacity>
@@ -378,11 +409,11 @@ const PropertyListingApp = () => {
           <View style={styles.chartLegend}>
             <View style={styles.legendItem}>
               <View style={[styles.legendColor, { backgroundColor: 'rgba(239, 68, 68, 1)' }]} />
-              <Text style={styles.legendText}>New Cairo City</Text>
+              <Text style={[styles.legendText, dynamicStyles.secondaryText]}>New Cairo City</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendColor, { backgroundColor: 'rgba(107, 114, 128, 1)' }]} />
-              <Text style={styles.legendText}>Cairo</Text>
+              <Text style={[styles.legendText, dynamicStyles.secondaryText]}>Cairo</Text>
             </View>
           </View>
 
@@ -391,39 +422,43 @@ const PropertyListingApp = () => {
             width={width - 40}
             height={220}
             chartConfig={{
-              backgroundColor: '#f9fafb',
-              backgroundGradientFrom: '#f9fafb',
-              backgroundGradientTo: '#f9fafb',
+              backgroundColor: dynamicStyles.chartBackground,
+              backgroundGradientFrom: dynamicStyles.chartBackground,
+              backgroundGradientTo: dynamicStyles.chartBackground,
               decimalPlaces: 0,
-              color: (opacity = 1) => `rgba(107, 114, 128, ${opacity})`,
-              labelColor: (opacity = 1) => `rgba(55, 65, 81, ${opacity})`,
+              color: (opacity = 1) => scheme === 'light' 
+                ? `rgba(107, 114, 128, ${opacity})` 
+                : `rgba(156, 163, 175, ${opacity})`,
+              labelColor: (opacity = 1) => scheme === 'light' 
+                ? `rgba(55, 65, 81, ${opacity})` 
+                : `rgba(209, 213, 219, ${opacity})`,
               style: { borderRadius: 16 },
               propsForDots: { r: '4' },
             }}
             bezier
-            style={styles.chart}
+            style={[styles.chart, { borderColor: scheme === 'light' ? '#e5e7eb' : theme.colors.outline }]}
           />
         </View>
 
         {/* Agent Info */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Provided by</Text>
-          <View style={styles.agencyCard}>
+        <View style={[styles.section, dynamicStyles.section]}>
+          <Text style={[styles.sectionTitle, dynamicStyles.primaryText]}>Provided by</Text>
+          <View style={[styles.agencyCard, dynamicStyles.cardBackground]}>
             <View style={styles.agencyIcon}>
               <Text style={styles.agencyIconText}>🏢</Text>
             </View>
             <View style={styles.agencyInfo}>
-              <Text style={styles.agencyName}>{propertyData.agent.agency}</Text>
-              <Text style={styles.agencyProperties}>
+              <Text style={[styles.agencyName, dynamicStyles.primaryText]}>{propertyData.agent.agency}</Text>
+              <Text style={[styles.agencyProperties, dynamicStyles.secondaryText]}>
                 See agency properties ({propertyData.agent.agencyProperties})
               </Text>
             </View>
           </View>
           
-          <View style={styles.agentCard}>
-            <Text style={styles.agentName}>{propertyData.agent.name}</Text>
-            <TouchableOpacity style={styles.agentPropertiesButton}>
-              <Text style={styles.agentPropertiesText}>
+          <View style={[styles.agentCard, dynamicStyles.cardBackground]}>
+            <Text style={[styles.agentName, dynamicStyles.primaryText]}>{propertyData.agent.name}</Text>
+            <TouchableOpacity style={[styles.agentPropertiesButton, { borderColor: scheme === 'light' ? '#d1d5db' : theme.colors.outline }]}>
+              <Text style={[styles.agentPropertiesText, dynamicStyles.secondaryText]}>
                 See agent properties ({propertyData.agent.properties})
               </Text>
             </TouchableOpacity>
@@ -431,28 +466,28 @@ const PropertyListingApp = () => {
         </View>
 
         {/* Regulatory Information */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Regulatory Information</Text>
-          <View style={styles.regulatoryInfo}>
-            <Text style={styles.regulatoryLabel}>Reference</Text>
-            <Text style={styles.regulatoryValue}>{propertyData.reference}</Text>
+        <View style={[styles.section, dynamicStyles.section]}>
+          <Text style={[styles.sectionTitle, dynamicStyles.primaryText]}>Regulatory Information</Text>
+          <View style={[styles.regulatoryInfo, dynamicStyles.cardBackground]}>
+            <Text style={[styles.regulatoryLabel, dynamicStyles.secondaryText]}>Reference</Text>
+            <Text style={[styles.regulatoryValue, dynamicStyles.primaryText]}>{propertyData.reference}</Text>
             
-            <Text style={styles.regulatoryLabel}>Listed</Text>
-            <Text style={styles.regulatoryValue}>{propertyData.listed}</Text>
+            <Text style={[styles.regulatoryLabel, dynamicStyles.secondaryText]}>Listed</Text>
+            <Text style={[styles.regulatoryValue, dynamicStyles.primaryText]}>{propertyData.listed}</Text>
             
-            <Text style={styles.regulatoryLabel}>Broker license</Text>
-            <Text style={styles.regulatoryValue}>{propertyData.brokerLicense}</Text>
+            <Text style={[styles.regulatoryLabel, dynamicStyles.secondaryText]}>Broker license</Text>
+            <Text style={[styles.regulatoryValue, dynamicStyles.primaryText]}>{propertyData.brokerLicense}</Text>
           </View>
         </View>
 
         {/* Report Section */}
-        <View style={styles.section}>
+        <View style={[styles.section, dynamicStyles.section]}>
           <View style={styles.reportSection}>
             <Text style={styles.reportIcon}>📋</Text>
-            <Text style={styles.reportText}>Is there anything wrong with this listing?</Text>
+            <Text style={[styles.reportText, dynamicStyles.secondaryText]}>Is there anything wrong with this listing?</Text>
           </View>
-          <TouchableOpacity style={styles.reportButton}>
-            <Text style={styles.reportButtonText}>🚨 Report</Text>
+          <TouchableOpacity style={[styles.reportButton, dynamicStyles.cardBackground]}>
+            <Text style={[styles.reportButtonText, dynamicStyles.secondaryText]}>🚨 Report</Text>
           </TouchableOpacity>
         </View>
 
@@ -460,23 +495,21 @@ const PropertyListingApp = () => {
       </ScrollView>
 
       {/* Bottom Action Buttons */}
-      <View style={styles.bottomActions}>
+      <View style={[styles.bottomActions, dynamicStyles.bottomActions]}>
         <TouchableOpacity style={styles.callButton} onPress={handleCall}>
-          <Text style={styles.callButtonText}>📞 Call</Text>
+          <Text style={styles.callButtonText}>📞{" "} Call</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.whatsappButton} onPress={handleWhatsApp}>
           <Text style={styles.whatsappButtonText}>💬 WhatsApp</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
-    marginTop: 42,
   },
   scrollView: {
     flex: 1,
@@ -569,16 +602,13 @@ const styles = StyleSheet.create({
   },
   priceSection: {
     padding: 20,
-    backgroundColor: '#f9fafb',
   },
   price: {
-    color: '#111827',
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 8,
   },
   title: {
-    color: '#6b7280',
     fontSize: 16,
     marginBottom: 16,
   },
@@ -597,16 +627,13 @@ const styles = StyleSheet.create({
   section: {
     padding: 20,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
   },
   sectionTitle: {
-    color: '#111827',
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 16,
   },
   description: {
-    color: '#6b7280',
     fontSize: 16,
     lineHeight: 24,
     marginBottom: 12,
@@ -622,15 +649,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
   },
   detailLabel: {
-    color: '#6b7280',
     fontSize: 16,
     flex: 1,
   },
   detailValue: {
-    color: '#111827',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -650,26 +674,21 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   amenityText: {
-    color: '#4b5563',
     fontSize: 14,
     flex: 1,
   },
   locationCard: {
-    backgroundColor: '#f3f4f6',
     padding: 16,
     borderRadius: 12,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
   },
   locationTitle: {
-    color: '#111827',
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 8,
   },
   locationSubtitle: {
-    color: '#6b7280',
     fontSize: 14,
     marginBottom: 16,
   },
@@ -685,7 +704,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   chartSubtitle: {
-    color: '#6b7280',
     fontSize: 14,
     marginBottom: 16,
   },
@@ -698,16 +716,13 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginRight: 8,
     borderRadius: 6,
-    backgroundColor: '#f3f4f6',
     borderWidth: 1,
-    borderColor: '#e5e7eb',
   },
   periodButtonActive: {
     backgroundColor: '#0b154f',
     borderColor: '#0b154f',
   },
   periodButtonText: {
-    color: '#6b7280',
     fontSize: 14,
   },
   periodButtonTextActive: {
@@ -728,24 +743,20 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   legendText: {
-    color: '#6b7280',
     fontSize: 12,
   },
   chart: {
     marginVertical: 8,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
   },
   agencyCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f9fafb',
     padding: 16,
     borderRadius: 12,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
   },
   agencyIcon: {
     width: 50,
@@ -763,16 +774,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   agencyName: {
-    color: '#111827',
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 4,
   },
   agencyProperties: {
-    color: '#6b7280',
     fontSize: 14,
   },
-  agentCard: {
+   agentCard: {
     alignItems: 'center',
     backgroundColor: '#f9fafb',
     padding: 20,
@@ -842,7 +851,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   bottomActions: {
-    marginBottom:60,
     flexDirection: 'row',
     paddingHorizontal: 20,
     paddingVertical: 10,
@@ -886,4 +894,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PropertyListingApp;
+export default PropertyDetailsScreen;
