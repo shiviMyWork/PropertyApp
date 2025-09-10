@@ -359,7 +359,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   getStartedButton: {
-    marginBottom:60,
     backgroundColor: '#0b154f',
     paddingHorizontal: 20,
     paddingVertical: 10,
