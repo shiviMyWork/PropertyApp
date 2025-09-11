@@ -186,8 +186,8 @@ const FilterModal = ({ visible, onClose, filters, onFiltersChange }) => {
               borderTopWidth: 1 
             }]}>
               <View style={[styles.sectionHeader, { marginTop: 14 }]}>
-                <Icon name="attach-money" size={20} color={iconColors.primary} />
-                <Text style={styles.sectionTitle}>Monthly Price Range (EGP)</Text>
+                <Icon name="payments" size={20} color={iconColors.primary} />
+                <Text style={styles.sectionTitle}>Monthly Price Range (AED)</Text>
               </View>
 
               {/* Price Chart Placeholder */}

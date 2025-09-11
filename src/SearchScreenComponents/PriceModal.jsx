@@ -47,12 +47,12 @@ const PriceModal = ({ visible, onClose, priceRange, onPriceChange }) => {
   }, [visible]);
 
   const priceRanges = [
-    '1,000 - 5,000 EGP',
-    '5,000 - 10,000 EGP',
-    '10,000 - 20,000 EGP',
-    '20,000 - 50,000 EGP',
-    '50,000 - 100,000 EGP',
-    '100,000+ EGP'
+    '1 - 5 AED',
+    '5 - 10 AED',
+    '10 - 20 AED',
+    '20 - 50 AED',
+    '50 - 100 AED',
+    '100+ AED'
   ];
 
   return (
@@ -73,8 +73,8 @@ const PriceModal = ({ visible, onClose, priceRange, onPriceChange }) => {
             {/* Price Histogram + Inputs */}
             <View style={styles.priceSection}>
               <View style={styles.sectionHeader}>
-                <Icon name="attach-money" size={20} color={iconColors.active} />
-                <Text style={styles.sectionTitle}>Monthly Price Range (EGP)</Text>
+                <Icon name="payments" size={20} color={iconColors.active} />
+                <Text style={styles.sectionTitle}>Monthly Price Range (AED)</Text>
               </View>
 
               {/* Histogram */}

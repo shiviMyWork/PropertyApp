@@ -36,7 +36,7 @@ function HomeTabs() {
           position: "absolute",
           overflow: "hidden",
         },
-        tabBarActiveTintColor: scheme === "light" ? "#fff" : "#0b154f",
+        tabBarActiveTintColor: scheme === "light" ? "#fff" : "#fff",
         tabBarInactiveTintColor:
           scheme === "light" ? "#ccc" : theme.colors.onSurfaceDisabled,
         tabBarIcon: ({ focused, color, size }) => {

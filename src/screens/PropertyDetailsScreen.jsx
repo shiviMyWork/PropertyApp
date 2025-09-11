@@ -68,7 +68,7 @@ const PropertyDetailsScreen = () => {
 
   // Sample property data
   const propertyData = {
-    price: '23,000 EGP/month',
+    price: '12M AED',
     title: 'studio fully furnished for rent near by AUC',
     images: [
       'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400',

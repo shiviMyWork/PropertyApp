@@ -91,7 +91,7 @@ const SearchScreen = () => {
     {
       id: 1,
       type: 'Apartment',
-      price: '2,900 EGP/month',
+      price: '12M AED',
       location: 'Mandinaty, Cairo',
       beds: 2,
       baths: 2,
@@ -104,7 +104,7 @@ const SearchScreen = () => {
     {
       id: 2,
       type: 'Apartment',
-      price: '2,900 EGP/month',
+      price: '7M AED',
       location: 'New Cairo',
       beds: 3,
       baths: 2,
