@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -21,13 +21,14 @@ import BedsAndBathsModal from '../SearchScreenComponents/BedsAndBathsModal';
 import AmenitiesModal from '../SearchScreenComponents/AmenitiesModal';
 import PropertyCard from '../SearchScreenComponents/PropertyCard';
 
+const API_BASE = "https://pestosoft.in/";
 
 const SearchScreen = () => {
   const navigation = useNavigation();
   const styles = useThemedStyles();
 
   const handleNavigateToDetails = (property) => {
-    navigation.navigate("PropertyDetails", { property });
+    navigation.navigate("PropertyDetails", { id: property.id });
   };
 
   const [favorites, setFavorites] = useState([]);
@@ -87,34 +88,74 @@ const SearchScreen = () => {
 
   const filterTabs = ['Rent', 'Property', 'Price', 'Beds & Baths', 'Amenities'];
 
-  const properties = [
-    {
-      id: 1,
-      type: 'Apartment',
-      price: '12M AED',
-      location: 'Mandinaty, Cairo',
-      beds: 2,
-      baths: 2,
-      area: '1292 Sqft',
-      listedTime: '7 hours ago',
-      phone: '+201234567890',
-      image: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop',
-      profileImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
-    },
-    {
-      id: 2,
-      type: 'Apartment',
-      price: '7M AED',
-      location: 'New Cairo',
-      beds: 3,
-      baths: 2,
-      area: '1450 Sqft',
-      listedTime: '7 hours ago',
-      phone: '+201234567891',
-      image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=300&fit=crop',
-      profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-    },
-  ];
+  // const properties = [
+  //   {
+  //     id: 1,
+  //     type: 'Apartment',
+  //     price: '12M AED',
+  //     location: 'Mandinaty, Cairo',
+  //     beds: 2,
+  //     baths: 2,
+  //     area: '1292 Sqft',
+  //     listedTime: '7 hours ago',
+  //     phone: '+201234567890',
+  //     image: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop',
+  //     profileImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
+  //   },
+  //   {
+  //     id: 2,
+  //     type: 'Apartment',
+  //     price: '7M AED',
+  //     location: 'New Cairo',
+  //     beds: 3,
+  //     baths: 2,
+  //     area: '1450 Sqft',
+  //     listedTime: '7 hours ago',
+  //     phone: '+201234567891',
+  //     image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=300&fit=crop',
+  //     profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
+  //   },
+  // ];
+
+  const [properties, setProperties] = useState([]);
+
+  // useEffect(() => {
+  //   fetch(`${API_BASE}/api/properties/type/1`)
+  //     .then((res) => res.json())
+  //     .then((data) => {
+  //       setProperties(data);
+  //       console.log("Fetched Properties:", data);
+  //     })
+  //     .catch((err) => console.error("Error fetching properties:", err));
+  // }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res1 = await fetch(`${API_BASE}/api/properties/type/1`);
+        const data1 = await res1.json();
+
+        const res2 = await fetch(`${API_BASE}/api/properties/type/2`);
+        const data2 = await res2.json();
+
+        const res3 = await fetch(`${API_BASE}/api/properties/commercial`);
+        const data3 = await res3.json();
+
+        const res4 = await fetch(`${API_BASE}/api/properties/type/5`);
+        const data4 = await res4.json();
+
+        const mergedData = [...data1, ...data2, ...data3, ...data4];
+        setProperties(mergedData);
+
+        console.log("Fetched Properties:", mergedData);
+      } catch (err) {
+        console.error("Error fetching properties:", err);
+      }
+    };
+
+    fetchData();
+  }, []);
+
 
   const handleCall = (phoneNumber) => {
     Linking.openURL(`tel:${phoneNumber}`);
