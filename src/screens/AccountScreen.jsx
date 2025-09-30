@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ScrollView,
   StatusBar,
@@ -9,21 +9,84 @@ import {
   Dimensions,
   Animated,
   useColorScheme,
+  Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from 'react-native-paper';
+import { useNavigation } from "@react-navigation/native";
 
 const { width } = Dimensions.get('window');
 
 const AccountScreen = () => {
+  const navigation = useNavigation();
   const [pressedItem, setPressedItem] = useState(null);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [showCountryModal, setShowCountryModal] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState('English (US)');
+  const [selectedCountry, setSelectedCountry] = useState('');
+  const [countries, setCountries] = useState([]);
+  const [loadingCountries, setLoadingCountries] = useState(false);
+  const [countryError, setCountryError] = useState(null);
   const theme = useTheme();
   const scheme = useColorScheme();
 
+  // Fetch countries from API
+  const fetchCountries = async (apiUrl) => {
+    setLoadingCountries(true);
+    setCountryError(null);
+    try {
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        throw new Error('Failed to fetch countries');
+      }
+      const data = await response.json();
+      setCountries(data);
+    } catch (error) {
+      console.error('Error fetching countries:', error);
+      setCountryError(error.message);
+    } finally {
+      setLoadingCountries(false);
+    }
+  };
+
   const handlePress = (item) => {
     console.log(`Pressed: ${item}`);
+
+    if (item === 'Language') {
+      setShowLanguageModal(true);
+      return;
+    }
+
+    if (item === 'Country') {
+      setShowCountryModal(true);
+      // Replace with your actual API endpoint
+      const API_URL = 'https://pestosoft.in/api/countries/';
+      fetchCountries(API_URL);
+      return;
+    }
+
     setPressedItem(item);
     setTimeout(() => setPressedItem(null), 150);
+  };
+
+  const handleLanguageSelect = (language) => {
+    setSelectedLanguage(language);
+    setShowLanguageModal(false);
+  };
+
+
+  const handleCountrySelect = (country) => {
+    const selectedId = country.id;
+    const selectedName = country.name;
+
+    setSelectedCountry(country.name);
+    setShowCountryModal(false);
+
+    navigation.navigate("Search", {
+      countryId: selectedId,
+      countryName: selectedName,
+    });
   };
 
   // Dynamic styles based on theme
@@ -55,14 +118,23 @@ const AccountScreen = () => {
     arrow: {
       color: scheme === 'light' ? '#bbb' : theme.colors.outline,
     },
+    modalOverlay: {
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+      backgroundColor: scheme === 'light' ? '#ffffff' : theme.colors.elevation.level2,
+    },
+    modalTitle: {
+      color: scheme === 'light' ? '#1a1a1a' : theme.colors.onSurface,
+    },
   };
 
   const MenuRow = ({ title, subtitle, onPress, showArrow = true, icon }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={[
         styles.menuRow,
         pressedItem === title && [styles.menuRowPressed, dynamicStyles.pressedRow]
-      ]} 
+      ]}
       onPress={() => onPress(title)}
       activeOpacity={0.7}
     >
@@ -87,17 +159,17 @@ const AccountScreen = () => {
 
   return (
     <SafeAreaView style={[styles.container, dynamicStyles.container]}>
-      <StatusBar 
-        barStyle={scheme === 'light' ? 'dark-content' : 'light-content'} 
-        backgroundColor={scheme === 'light' ? '#fafbfc' : theme.colors.background} 
+      <StatusBar
+        barStyle={scheme === 'light' ? 'dark-content' : 'light-content'}
+        backgroundColor={scheme === 'light' ? '#fafbfc' : theme.colors.background}
       />
-      
-      <ScrollView 
-        contentInsetAdjustmentBehavior="automatic" 
+
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
-        
+
         {/* Profile Card */}
         <View style={[styles.signupCard, dynamicStyles.cardBackground]}>
           <View style={styles.profileSection}>
@@ -115,8 +187,8 @@ const AccountScreen = () => {
 
         {/* Property Listing Promotion */}
         <View style={styles.propertyCard}>
-          <TouchableOpacity 
-            style={styles.closeButton} 
+          <TouchableOpacity
+            style={styles.closeButton}
             onPress={() => handlePress('close')}
           >
             <Text style={styles.closeText}>✕</Text>
@@ -124,8 +196,8 @@ const AccountScreen = () => {
           <View style={styles.propertyContent}>
             <View style={styles.propertyTextSection}>
               <Text style={styles.propertyTitle}>Want to list your property with us?</Text>
-              <TouchableOpacity 
-                style={styles.getStartedButton} 
+              <TouchableOpacity
+                style={styles.getStartedButton}
                 onPress={() => handlePress('get started')}
               >
                 <Text style={styles.getStartedText}>Get Started</Text>
@@ -143,14 +215,14 @@ const AccountScreen = () => {
           <View style={[styles.menuContainer, dynamicStyles.cardBackground]}>
             <MenuRow
               title="Language"
-              subtitle="English (US)"
+              subtitle={selectedLanguage}
               icon="🌐"
               onPress={handlePress}
             />
             <View style={[styles.separator, dynamicStyles.separator]} />
             <MenuRow
               title="Country"
-              subtitle="Egypt"
+              subtitle={selectedCountry}
               icon="🌍"
               onPress={handlePress}
             />
@@ -227,10 +299,168 @@ const AccountScreen = () => {
 
         {/* Footer */}
         <View style={styles.footer}>
-          {/* <Text style={styles.footerText}>Property Finder v2.1.0</Text>
-          <Text style={styles.footerSubtext}>Made with ❤️ for property seekers</Text> */}
         </View>
       </ScrollView>
+
+      {/* Language Selection Modal */}
+      <Modal
+        visible={showLanguageModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowLanguageModal(false)}
+      >
+        <TouchableOpacity
+          style={[styles.modalOverlay, dynamicStyles.modalOverlay]}
+          activeOpacity={1}
+          onPress={() => setShowLanguageModal(false)}
+        >
+          <View style={styles.modalContainer}>
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+            >
+              <View style={[styles.modalContent, dynamicStyles.modalContent]}>
+                <Text style={[styles.modalTitle, dynamicStyles.modalTitle]}>Select Language</Text>
+
+                <TouchableOpacity
+                  style={[
+                    styles.languageOption,
+                    selectedLanguage === 'English (US)' && styles.selectedOption
+                  ]}
+                  onPress={() => handleLanguageSelect('English (US)')}
+                >
+                  <Text style={styles.languageIcon}>🇺🇸</Text>
+                  <Text style={[
+                    styles.languageText,
+                    dynamicStyles.primaryText,
+                    selectedLanguage === 'English (US)' && styles.selectedText
+                  ]}>
+                    English (US)
+                  </Text>
+                  {selectedLanguage === 'English (US)' && (
+                    <Text style={styles.checkmark}>✓</Text>
+                  )}
+                </TouchableOpacity>
+
+                <View style={[styles.modalSeparator, dynamicStyles.separator]} />
+
+                <TouchableOpacity
+                  style={[
+                    styles.languageOption,
+                    selectedLanguage === 'العربية' && styles.selectedOption
+                  ]}
+                  onPress={() => handleLanguageSelect('العربية')}
+                >
+                  <Text style={styles.languageIcon}>🇸🇦</Text>
+                  <Text style={[
+                    styles.languageText,
+                    styles.arabicText,
+                    dynamicStyles.primaryText,
+                    selectedLanguage === 'العربية' && styles.selectedText
+                  ]}>
+                    العربية
+                  </Text>
+                  {selectedLanguage === 'العربية' && (
+                    <Text style={styles.checkmark}>✓</Text>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => setShowLanguageModal(false)}
+                >
+                  <Text style={styles.cancelText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Country Selection Modal */}
+      <Modal
+        visible={showCountryModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowCountryModal(false)}
+      >
+        <TouchableOpacity
+          style={[styles.modalOverlay, dynamicStyles.modalOverlay]}
+          activeOpacity={1}
+          onPress={() => setShowCountryModal(false)}
+        >
+          <View style={styles.modalContainer}>
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+            >
+              <View style={[styles.modalContent, dynamicStyles.modalContent, styles.countryModalContent]}>
+                <Text style={[styles.modalTitle, dynamicStyles.modalTitle]}>Select Country</Text>
+
+                {loadingCountries ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#2196f3" />
+                    <Text style={[styles.loadingText, dynamicStyles.secondaryText]}>
+                      Loading countries...
+                    </Text>
+                  </View>
+                ) : countryError ? (
+                  <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>⚠️</Text>
+                    <Text style={[styles.errorMessage, dynamicStyles.primaryText]}>
+                      Failed to load countries
+                    </Text>
+                    <Text style={[styles.errorSubtext, dynamicStyles.secondaryText]}>
+                      {countryError}
+                    </Text>
+                  </View>
+                ) : (
+                  <ScrollView
+                    style={styles.countryList}
+                    showsVerticalScrollIndicator={true}
+                  >
+                    {countries.map((country, index) => (
+                      <View key={index}>
+                        <TouchableOpacity
+                          style={[
+                            styles.languageOption,
+                            selectedCountry === (country.name || country) && styles.selectedOption
+                          ]}
+                          onPress={() => handleCountrySelect(country)}
+                        >
+                          <Text style={styles.languageIcon}>
+                            {country.flag || '🌍'}
+                          </Text>
+                          <Text style={[
+                            styles.languageText,
+                            dynamicStyles.primaryText,
+                            selectedCountry === (country.name || country) && styles.selectedText
+                          ]}>
+                            {country.name || country}
+                          </Text>
+                          {selectedCountry === (country.name || country) && (
+                            <Text style={styles.checkmark}>✓</Text>
+                          )}
+                        </TouchableOpacity>
+                        {index < countries.length - 1 && (
+                          <View style={[styles.modalSeparator, dynamicStyles.separator]} />
+                        )}
+                      </View>
+                    ))}
+                  </ScrollView>
+                )}
+
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => setShowCountryModal(false)}
+                >
+                  <Text style={styles.cancelText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -480,6 +710,112 @@ const styles = StyleSheet.create({
   footerSubtext: {
     color: '#bbb',
     fontSize: 13,
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: '85%',
+    maxWidth: 400,
+  },
+  modalContent: {
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  countryModalContent: {
+    maxHeight: '100%',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  languageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+  },
+  selectedOption: {
+    backgroundColor: 'rgba(33, 150, 243, 0.08)',
+  },
+  languageIcon: {
+    fontSize: 24,
+    marginRight: 16,
+  },
+  languageText: {
+    fontSize: 17,
+    fontWeight: '500',
+    flex: 1,
+  },
+  arabicText: {
+    textAlign: 'right',
+    fontWeight: '600',
+  },
+  selectedText: {
+    color: '#2196f3',
+    fontWeight: '600',
+  },
+  checkmark: {
+    fontSize: 20,
+    color: '#2196f3',
+    fontWeight: 'bold',
+  },
+  modalSeparator: {
+    height: 1,
+    marginVertical: 8,
+  },
+  cancelButton: {
+    marginTop: 16,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  cancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666',
+  },
+  // Country Modal Specific Styles
+  countryList: {
+    maxHeight: 300,
+  },
+  loadingContainer: {
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 15,
+  },
+  errorContainer: {
+    paddingVertical: 32,
+    alignItems: 'center',
+  },
+  errorText: {
+    fontSize: 40,
+    marginBottom: 12,
+  },
+  errorMessage: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  errorSubtext: {
+    fontSize: 14,
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
 });
 

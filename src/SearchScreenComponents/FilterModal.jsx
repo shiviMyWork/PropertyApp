@@ -14,15 +14,15 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useTheme } from 'react-native-paper';
 import { useThemedStyles } from "./styles";
 
+const API_BASE = "https://pestosoft.in/";
 const { height: screenHeight } = Dimensions.get('window');
 
-const FilterModal = ({ visible, onClose, filters, onFiltersChange }) => {
+const FilterModal = ({ visible, onClose, filters, onFiltersChange, onPropertiesUpdate }) => {
   const styles = useThemedStyles();
   const scheme = useColorScheme();
   const theme = useTheme();
   const [slideAnim] = useState(new Animated.Value(screenHeight));
 
-  // Dynamic colors for icons based on theme
   const iconColors = {
     primary: scheme === 'dark' ? '#ffffff' : '#333',
     secondary: scheme === 'dark' ? '#cccccc' : '#999',
@@ -59,16 +59,171 @@ const FilterModal = ({ visible, onClose, filters, onFiltersChange }) => {
     { key: 'waterView', label: 'View of Water', icon: 'water' },
   ];
 
-  const updateFilter = (key, value) => {
-    onFiltersChange({ ...filters, [key]: value });
+  // Centralized fetch using latest filters with CLIENT-SIDE filtering as backup
+  const fetchProperties = async (activeFilters) => {
+    try {
+      let url = `${API_BASE}/api/properties`;
+
+      if (activeFilters.type === "Buy") url = `${API_BASE}/api/properties/type/1`;
+      if (activeFilters.type === "Rent") url = `${API_BASE}/api/properties/type/2`;
+
+      const params = new URLSearchParams();
+
+      if (activeFilters.bedrooms?.length) {
+        const mappedBedrooms = activeFilters.bedrooms.map(b =>
+          b === "Studio" ? 0 : b === "7+" ? 7 : b
+        );
+        params.append("bedrooms", mappedBedrooms.join(","));
+      }
+
+      if (activeFilters.bathrooms?.length) {
+        const mappedBathrooms = activeFilters.bathrooms.map(b =>
+          b === "7+" ? 7 : b
+        );
+        params.append("bathrooms", mappedBathrooms.join(","));
+      }
+
+      if (activeFilters.propertyTypes?.length)
+        params.append("propertyTypes", activeFilters.propertyTypes.join(","));
+
+      if (activeFilters.amenities?.length)
+        params.append("amenities", activeFilters.amenities.join(","));
+
+      if (activeFilters.minSize)
+        params.append("minSize", activeFilters.minSize);
+
+      if (activeFilters.maxSize)
+        params.append("maxSize", activeFilters.maxSize);
+
+      if ([...params].length) url += `?${params.toString()}`;
+
+      console.log("Fetching URL:", url);
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      console.log("API Response count:", data.length);
+
+      // CLIENT-SIDE FILTERING (backup if API doesn't filter properly)
+      let filteredData = data;
+
+      if (activeFilters.bedrooms?.length) {
+        filteredData = filteredData.filter(property => {
+          const bedrooms = property.bedrooms;
+          return activeFilters.bedrooms.some(selected => {
+            if (selected === "Studio") return bedrooms === 0;
+            if (selected === "7+") return bedrooms >= 7;
+            return bedrooms.toString() === selected;
+          });
+        });
+        console.log("After bedroom filter:", filteredData.length);
+      }
+
+      if (activeFilters.bathrooms?.length) {
+        filteredData = filteredData.filter(property => {
+          const bathrooms = property.bathrooms;
+          return activeFilters.bathrooms.some(selected => {
+            if (selected === "7+") return bathrooms >= 7;
+            return bathrooms.toString() === selected;
+          });
+        });
+        console.log("After bathroom filter:", filteredData.length);
+      }
+
+      if (activeFilters.propertyTypes?.length) {
+        filteredData = filteredData.filter(property =>
+          activeFilters.propertyTypes.includes(property.property_type)
+        );
+        console.log("After property type filter:", filteredData.length);
+      }
+
+      if (activeFilters.minPrice || activeFilters.maxPrice) {
+        const min = activeFilters.minPrice ? parseInt(activeFilters.minPrice, 10) : 0;
+        const max = activeFilters.maxPrice ? parseInt(activeFilters.maxPrice, 10) : Infinity;
+        filteredData = filteredData.filter(property =>
+          property.expected_price >= min && property.expected_price <= max
+        );
+        console.log("After price filter:", filteredData.length);
+      }
+
+      if (activeFilters.minSize || activeFilters.maxSize) {
+        const minSize = activeFilters.minSize ? parseInt(activeFilters.minSize, 10) : 0;
+        const maxSize = activeFilters.maxSize ? parseInt(activeFilters.maxSize, 10) : Infinity;
+        filteredData = filteredData.filter(property =>
+          property.carpet_area >= minSize && property.carpet_area <= maxSize
+        );
+        console.log("After size filter:", filteredData.length);
+      }
+
+      if (activeFilters.furnishings?.length) {
+        filteredData = filteredData.filter(property => {
+          const propertyStatus = property.furnishing_status?.toLowerCase();
+          return activeFilters.furnishings.some(selected =>
+            selected.toLowerCase() === propertyStatus
+          );
+        });
+        console.log("After furnishing filter:", filteredData.length);
+      }
+
+      onPropertiesUpdate(filteredData);
+    } catch (err) {
+      console.error("Error fetching properties:", err);
+    }
   };
 
-  const toggleArrayFilter = (key, value) => {
+  // Handle array filter toggle (bedrooms, bathrooms, etc.)
+  const handleArrayFilterToggle = (key, value) => {
+    console.log(`Toggling ${key}:`, value);
+
     const currentArray = filters[key] || [];
-    const newArray = currentArray.includes(value)
+    const updatedArray = currentArray.includes(value)
       ? currentArray.filter(item => item !== value)
       : [...currentArray, value];
-    updateFilter(key, newArray);
+
+    console.log(`Updated ${key} array:`, updatedArray);
+
+    const updatedFilters = { ...filters, [key]: updatedArray };
+    onFiltersChange(updatedFilters);
+    fetchProperties(updatedFilters);
+  };
+
+  // Simple filter update (for non-array values)
+  const updateFilter = (key, value) => {
+    const updatedFilters = { ...filters, [key]: value };
+    onFiltersChange(updatedFilters);
+  };
+
+  // Handle price change with debouncing
+  const handlePriceChange = (key, value) => {
+    const updatedFilters = { ...filters, [key]: value };
+    onFiltersChange(updatedFilters);
+
+    // Fetch properties when price is entered
+    if (value === '' || (value && !isNaN(value))) {
+      fetchProperties(updatedFilters);
+    }
+  };
+
+  // Handle size change with debouncing
+  const handleSizeChange = (key, value) => {
+    const updatedFilters = { ...filters, [key]: value };
+    onFiltersChange(updatedFilters);
+
+    // Fetch properties when size is entered
+    if (value === '' || (value && !isNaN(value))) {
+      fetchProperties(updatedFilters);
+    }
+  };
+
+  // Handle type toggle (Buy/Rent)
+  const handleTypeToggle = async (type) => {
+    console.log("Type toggle:", type);
+
+    const newType = filters.type === type ? "" : type;
+    const updatedFilters = { ...filters, type: newType };
+
+    onFiltersChange(updatedFilters);
+    fetchProperties(updatedFilters);
   };
 
   return (
@@ -100,15 +255,20 @@ const FilterModal = ({ visible, onClose, filters, onFiltersChange }) => {
             <View style={styles.toggleContainer}>
               <TouchableOpacity
                 style={[styles.toggleButton, filters.type === 'Rent' && styles.activeToggle]}
-                onPress={() => updateFilter('type', 'Rent')}
+                onPress={() => handleTypeToggle('Rent')}
               >
-                <Text style={[styles.toggleText, filters.type === 'Rent' && styles.activeToggleText]}>Rent</Text>
+                <Text style={[styles.toggleText, filters.type === 'Rent' && styles.activeToggleText]}>
+                  Rent
+                </Text>
               </TouchableOpacity>
+
               <TouchableOpacity
                 style={[styles.toggleButton, filters.type === 'Buy' && styles.activeToggle]}
-                onPress={() => updateFilter('type', 'Buy')}
+                onPress={() => handleTypeToggle('Buy')}
               >
-                <Text style={[styles.toggleText, filters.type === 'Buy' && styles.activeToggleText]}>Buy</Text>
+                <Text style={[styles.toggleText, filters.type === 'Buy' && styles.activeToggleText]}>
+                  Buy
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -139,7 +299,7 @@ const FilterModal = ({ visible, onClose, filters, onFiltersChange }) => {
                       styles.optionButton,
                       (filters.propertyTypes || []).includes(type) && styles.activeOption
                     ]}
-                    onPress={() => toggleArrayFilter('propertyTypes', type)}
+                    onPress={() => handleArrayFilterToggle('propertyTypes', type)}
                   >
                     <Text style={[
                       styles.optionText,
@@ -156,9 +316,9 @@ const FilterModal = ({ visible, onClose, filters, onFiltersChange }) => {
             </View>
 
             {/* Price Period */}
-            <View style={[styles.filterSection, { 
-              borderTopColor: scheme === 'dark' ? '#404040' : '#deddddff', 
-              borderTopWidth: 1 
+            <View style={[styles.filterSection, {
+              borderTopColor: scheme === 'dark' ? '#404040' : '#deddddff',
+              borderTopWidth: 1
             }]}>
               <View style={[styles.sectionHeader, { marginTop: 14 }]}>
                 <Icon name="schedule" size={20} color={iconColors.primary} />
@@ -181,9 +341,9 @@ const FilterModal = ({ visible, onClose, filters, onFiltersChange }) => {
             </View>
 
             {/* Price Range */}
-            <View style={[styles.filterSection, { 
-              borderTopColor: scheme === 'dark' ? '#404040' : '#deddddff', 
-              borderTopWidth: 1 
+            <View style={[styles.filterSection, {
+              borderTopColor: scheme === 'dark' ? '#404040' : '#deddddff',
+              borderTopWidth: 1
             }]}>
               <View style={[styles.sectionHeader, { marginTop: 14 }]}>
                 <Icon name="payments" size={20} color={iconColors.primary} />
@@ -211,7 +371,8 @@ const FilterModal = ({ visible, onClose, filters, onFiltersChange }) => {
                   placeholder="No min."
                   placeholderTextColor={iconColors.placeholder}
                   value={filters.minPrice}
-                  onChangeText={(text) => updateFilter('minPrice', text)}
+                  onChangeText={(text) => handlePriceChange('minPrice', text)}
+                  keyboardType="numeric"
                 />
                 <Text style={styles.priceSeparator}>—</Text>
                 <TextInput
@@ -219,15 +380,16 @@ const FilterModal = ({ visible, onClose, filters, onFiltersChange }) => {
                   placeholder="No max."
                   placeholderTextColor={iconColors.placeholder}
                   value={filters.maxPrice}
-                  onChangeText={(text) => updateFilter('maxPrice', text)}
+                  onChangeText={(text) => handlePriceChange('maxPrice', text)}
+                  keyboardType="numeric"
                 />
               </View>
             </View>
 
             {/* Bedrooms */}
-            <View style={[styles.filterSection, { 
-              borderTopColor: scheme === 'dark' ? '#404040' : '#deddddff', 
-              borderTopWidth: 1 
+            <View style={[styles.filterSection, {
+              borderTopColor: scheme === 'dark' ? '#404040' : '#deddddff',
+              borderTopWidth: 1
             }]}>
               <View style={[styles.sectionHeader, { marginTop: 14 }]}>
                 <Icon name="bed" size={20} color={iconColors.primary} />
@@ -241,7 +403,7 @@ const FilterModal = ({ visible, onClose, filters, onFiltersChange }) => {
                       styles.numberOption,
                       (filters.bedrooms || []).includes(option) && styles.activeOption
                     ]}
-                    onPress={() => toggleArrayFilter('bedrooms', option)}
+                    onPress={() => handleArrayFilterToggle("bedrooms", option)}
                   >
                     <Text style={[
                       styles.optionText,
@@ -255,9 +417,9 @@ const FilterModal = ({ visible, onClose, filters, onFiltersChange }) => {
             </View>
 
             {/* Bathrooms */}
-            <View style={[styles.filterSection, { 
-              borderTopColor: scheme === 'dark' ? '#404040' : '#deddddff', 
-              borderTopWidth: 1 
+            <View style={[styles.filterSection, {
+              borderTopColor: scheme === 'dark' ? '#404040' : '#deddddff',
+              borderTopWidth: 1
             }]}>
               <View style={[styles.sectionHeader, { marginTop: 14 }]}>
                 <Icon name="bathtub" size={20} color={iconColors.primary} />
@@ -271,7 +433,7 @@ const FilterModal = ({ visible, onClose, filters, onFiltersChange }) => {
                       styles.numberOption,
                       (filters.bathrooms || []).includes(option) && styles.activeOption
                     ]}
-                    onPress={() => toggleArrayFilter('bathrooms', option)}
+                    onPress={() => handleArrayFilterToggle("bathrooms", option)}
                   >
                     <Text style={[
                       styles.optionText,
@@ -285,9 +447,9 @@ const FilterModal = ({ visible, onClose, filters, onFiltersChange }) => {
             </View>
 
             {/* Furnishings */}
-            <View style={[styles.filterSection, { 
-              borderTopColor: scheme === 'dark' ? '#404040' : '#deddddff', 
-              borderTopWidth: 1 
+            <View style={[styles.filterSection, {
+              borderTopColor: scheme === 'dark' ? '#404040' : '#deddddff',
+              borderTopWidth: 1
             }]}>
               <View style={[styles.sectionHeader, { marginTop: 14 }]}>
                 <Icon name="weekend" size={20} color={iconColors.primary} />
@@ -301,7 +463,7 @@ const FilterModal = ({ visible, onClose, filters, onFiltersChange }) => {
                       styles.furnishingButton,
                       (filters.furnishings || []).includes(option) && styles.activeOption
                     ]}
-                    onPress={() => toggleArrayFilter('furnishings', option)}
+                    onPress={() => handleArrayFilterToggle('furnishings', option)}
                   >
                     <Text style={[
                       styles.optionText,
@@ -315,9 +477,9 @@ const FilterModal = ({ visible, onClose, filters, onFiltersChange }) => {
             </View>
 
             {/* Property Size */}
-            <View style={[styles.filterSection, { 
-              borderTopColor: scheme === 'dark' ? '#404040' : '#deddddff', 
-              borderTopWidth: 1 
+            <View style={[styles.filterSection, {
+              borderTopColor: scheme === 'dark' ? '#404040' : '#deddddff',
+              borderTopWidth: 1
             }]}>
               <View style={[styles.sectionHeader, { marginTop: 14 }]}>
                 <Icon name="straighten" size={20} color={iconColors.primary} />
@@ -330,9 +492,10 @@ const FilterModal = ({ visible, onClose, filters, onFiltersChange }) => {
                     placeholder="Min. size"
                     placeholderTextColor={iconColors.placeholder}
                     value={filters.minSize}
-                    onChangeText={(text) => updateFilter('minSize', text)}
+                    onChangeText={(text) => handleSizeChange('minSize', text)}
+                    keyboardType="numeric"
                   />
-                  <Icon name="keyboard-arrow-down" size={20} color={iconColors.secondary} />
+                 
                 </View>
                 <Text style={styles.sizeSeparator}>to</Text>
                 <View style={styles.sizeInputContainer}>
@@ -341,17 +504,18 @@ const FilterModal = ({ visible, onClose, filters, onFiltersChange }) => {
                     placeholder="Max. size"
                     placeholderTextColor={iconColors.placeholder}
                     value={filters.maxSize}
-                    onChangeText={(text) => updateFilter('maxSize', text)}
+                    onChangeText={(text) => handleSizeChange('maxSize', text)}
+                    keyboardType="numeric"
                   />
-                  <Icon name="keyboard-arrow-down" size={20} color={iconColors.secondary} />
+                 
                 </View>
               </View>
             </View>
 
             {/* Amenities */}
-            <View style={[styles.filterSection, { 
-              borderTopColor: scheme === 'dark' ? '#404040' : '#deddddff', 
-              borderTopWidth: 1 
+            <View style={[styles.filterSection, {
+              borderTopColor: scheme === 'dark' ? '#404040' : '#deddddff',
+              borderTopWidth: 1
             }]}>
               <View style={[styles.sectionHeader, { marginTop: 14 }]}>
                 <Icon name="visibility" size={20} color={iconColors.primary} />
@@ -365,7 +529,7 @@ const FilterModal = ({ visible, onClose, filters, onFiltersChange }) => {
                       styles.amenityButton,
                       (filters.amenities || []).includes(amenity.key) && styles.activeAmenity
                     ]}
-                    onPress={() => toggleArrayFilter('amenities', amenity.key)}
+                    onPress={() => handleArrayFilterToggle('amenities', amenity.key)}
                   >
                     <Icon
                       name={amenity.icon}
@@ -387,9 +551,9 @@ const FilterModal = ({ visible, onClose, filters, onFiltersChange }) => {
             </View>
 
             {/* Days on Property Finder */}
-            <View style={[styles.filterSection, { 
-              borderTopColor: scheme === 'dark' ? '#404040' : '#deddddff', 
-              borderTopWidth: 1 
+            <View style={[styles.filterSection, {
+              borderTopColor: scheme === 'dark' ? '#404040' : '#deddddff',
+              borderTopWidth: 1
             }]}>
               <View style={[styles.sectionHeader, { marginTop: 14 }]}>
                 <Icon name="calendar-today" size={20} color={iconColors.primary} />
@@ -408,10 +572,10 @@ const FilterModal = ({ visible, onClose, filters, onFiltersChange }) => {
             </View>
 
             {/* Keywords */}
-            <View style={[styles.filterSection, { 
-              borderTopColor: scheme === 'dark' ? '#404040' : '#deddddff', 
-              borderTopWidth: 1, 
-              marginBottom: 20 
+            <View style={[styles.filterSection, {
+              borderTopColor: scheme === 'dark' ? '#404040' : '#deddddff',
+              borderTopWidth: 1,
+              marginBottom: 20
             }]}>
               <View style={[styles.sectionHeader, { marginTop: 14 }]}>
                 <Icon name="search" size={20} color={iconColors.primary} />
@@ -432,7 +596,7 @@ const FilterModal = ({ visible, onClose, filters, onFiltersChange }) => {
                 style={styles.applyButton}
                 onPress={onClose}
               >
-                <Text style={styles.applyButtonText}>Show 46,561 properties</Text>
+                <Text style={styles.applyButtonText}>Show properties</Text>
               </TouchableOpacity>
             </View>
 

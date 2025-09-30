@@ -23,23 +23,24 @@ import PropertyCard from '../SearchScreenComponents/PropertyCard';
 
 const API_BASE = "https://pestosoft.in/";
 
-const SearchScreen = () => {
+const API_ENDPOINTS = {
+  Buy: `${API_BASE}/api/properties/type/1`,   
+  Rent: `${API_BASE}/api/properties/type/2`, 
+};
+
+const SearchScreen = ({ route }) => {
   const navigation = useNavigation();
   const styles = useThemedStyles();
-
+ 
   const handleNavigateToDetails = (property) => {
     navigation.navigate("PropertyDetails", { id: property.id });
   };
 
   const [favorites, setFavorites] = useState([]);
   const [searchText, setSearchText] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState('Rent');
+  const [selectedFilter, setSelectedFilter] = useState('');
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [filters, setFilters] = useState({
-    type: 'Rent',
-    commercial: false,
-    pricePeriod: 'Monthly',
-  });
+  const [filters, setFilters] = useState({});
 
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showPropertyModal, setShowPropertyModal] = useState(false);
@@ -47,7 +48,7 @@ const SearchScreen = () => {
   const [showBedsAndBathsModal, setShowBedsAndBathsModal] = useState(false);
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
 
-  const [selectedCategory, setSelectedCategory] = useState('Rent');
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedProperties, setSelectedProperties] = useState([]);
   const [priceRange, setPriceRange] = useState({ min: '', max: '', selected: '' });
   const [bedsAndBaths, setBedsAndBaths] = useState({ bedrooms: [], bathrooms: [] });
@@ -61,32 +62,56 @@ const SearchScreen = () => {
     );
   };
 
-  // Update the filter tabs click handler:
-  const handleFilterTabPress = (filter) => {
-    setSelectedFilter(filter);
-
-    switch (filter) {
-      case 'Rent':
-        setShowCategoryModal(true);
-        break;
-      case 'Property':
-        setShowPropertyModal(true);
-        break;
-      case 'Price':
-        setShowPriceModal(true);
-        break;
-      case 'Beds & Baths':
-        setShowBedsAndBathsModal(true);
-        break;
-      case 'Amenities':
-        setShowAmenitiesModal(true);
-        break;
-      default:
-        break;
+  const handleFilterTabPress = async (filter) => {
+  // If clicking the already selected Buy/Rent tab → deselect
+  if (selectedFilter === filter && (filter === "Buy" || filter === "Rent")) {
+    setSelectedFilter(""); // deselect tab
+    // Fetch default properties
+    try {
+      const res = await fetch(`${API_BASE}/api/properties`);
+      const data = await res.json();
+      setProperties(data);
+      console.log("Fetched Default Properties:", data);
+    } catch (err) {
+      console.error("Error fetching default properties:", err);
     }
-  };
+    return;
+  }
 
-  const filterTabs = ['Rent', 'Property', 'Price', 'Beds & Baths', 'Amenities'];
+  setSelectedFilter(filter);
+
+  switch (filter) {
+    case "Buy":
+    case "Rent":
+      // Fetch Buy or Rent properties
+      try {
+        const res = await fetch(API_ENDPOINTS[filter]);
+        const data = await res.json();
+        setProperties(data);
+        console.log(`${filter} Properties:`, data);
+      } catch (err) {
+        console.error(`Error fetching ${filter} properties:`, err);
+      }
+      break;
+
+    case "Property":
+      setShowPropertyModal(true);
+      break;
+    case "Price":
+      setShowPriceModal(true);
+      break;
+    case "Beds & Baths":
+      setShowBedsAndBathsModal(true);
+      break;
+    case "Amenities":
+      setShowAmenitiesModal(true);
+      break;
+    default:
+      break;
+  }
+};
+
+  const filterTabs = ['Buy', 'Rent', 'Property', 'Price', 'Beds & Baths', 'Amenities'];
 
   // const properties = [
   //   {
@@ -120,7 +145,7 @@ const SearchScreen = () => {
   const [properties, setProperties] = useState([]);
 
   // useEffect(() => {
-  //   fetch(`${API_BASE}/api/properties/type/1`)
+  //   fetch(`${API_BASE}/api/properties`)
   //     .then((res) => res.json())
   //     .then((data) => {
   //       setProperties(data);
@@ -129,33 +154,84 @@ const SearchScreen = () => {
   //     .catch((err) => console.error("Error fetching properties:", err));
   // }, []);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res1 = await fetch(`${API_BASE}/api/properties/type/1`);
-        const data1 = await res1.json();
+const { countryId, countryName } = route.params || {};
+console.log("Received Country ID:", countryId);
+console.log("Received Country Name:", countryName);
 
-        const res2 = await fetch(`${API_BASE}/api/properties/type/2`);
-        const data2 = await res2.json();
+useEffect(() => {
+  const fetchProperties = async () => {
+    try {
+      const endpoint = countryId
+        ? `${API_BASE}/api/properties/country/${countryId}` 
+        : `${API_BASE}/api/properties`;
 
-        const res3 = await fetch(`${API_BASE}/api/properties/commercial`);
-        const data3 = await res3.json();
+      console.log("Fetching from:", endpoint);
 
-        const res4 = await fetch(`${API_BASE}/api/properties/type/5`);
-        const data4 = await res4.json();
+      const res = await fetch(endpoint);
 
-        const mergedData = [...data1, ...data2, ...data3, ...data4];
-        setProperties(mergedData);
-
-        console.log("Fetched Properties:", mergedData);
-      } catch (err) {
-        console.error("Error fetching properties:", err);
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("API returned error:", text);
+        return;
       }
-    };
 
-    fetchData();
-  }, []);
+      const data = await res.json();
+      setProperties(data);
+      console.log("Fetched Properties:", data);
+    } catch (err) {
+      console.error("Error fetching properties:", err);
+    }
+  };
 
+  fetchProperties();
+}, [countryId]);
+
+
+const filteredProperties = properties.filter((property) => {
+  const text = searchText.toLowerCase();
+  const cityMatch = property.city?.toLowerCase().includes(text);
+  const carpetAreaMatch = property.carpet_area?.toString().toLowerCase().includes(text);
+
+  // 🛏️ Bedrooms filtering
+  const selectedBedrooms = bedsAndBaths.bedrooms || [];
+  let bedroomsMatch = true;
+  if (selectedBedrooms.length > 0) {
+    if (selectedBedrooms.includes("Studio")) {
+      bedroomsMatch = property.bedrooms === 0;
+    } else if (selectedBedrooms.includes("7+")) {
+      bedroomsMatch = property.bedrooms >= 7;
+    } else {
+      bedroomsMatch = selectedBedrooms.includes(property.bedrooms?.toString());
+    }
+  }
+
+  // 🛁 Bathrooms filtering
+  const selectedBathrooms = bedsAndBaths.bathrooms || [];
+  let bathroomsMatch = true;
+  if (selectedBathrooms.length > 0) {
+    if (selectedBathrooms.includes("7+")) {
+      bathroomsMatch = property.bathrooms >= 7;
+    } else {
+      bathroomsMatch = selectedBathrooms.includes(property.bathrooms?.toString());
+    }
+  }
+
+  // 💰 Price filtering (using expected_price from API)
+  let priceMatch = true;
+  if (priceRange.min || priceRange.max) {
+    const min = priceRange.min ? parseInt(priceRange.min, 10) : 0;
+    const max = priceRange.max ? parseInt(priceRange.max, 10) : Infinity;
+
+    priceMatch = property.expected_price >= min && property.expected_price <= max;
+  }
+
+  // ✅ Apply all filters together
+  return (cityMatch || carpetAreaMatch) && bedroomsMatch && bathroomsMatch && priceMatch;
+});
+
+  const handlePropertiesUpdate = (newProperties) => {
+  setProperties(newProperties);
+};
 
   const handleCall = (phoneNumber) => {
     Linking.openURL(`tel:${phoneNumber}`);
@@ -176,7 +252,7 @@ const SearchScreen = () => {
           <Icon name="search" size={20} color="#666" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="City, area or building"
+            placeholder="Search city, area..."
             placeholderTextColor="#666"
             value={searchText}
             onChangeText={setSearchText}
@@ -220,10 +296,10 @@ const SearchScreen = () => {
       {/* Properties Count & New Badge */}
       <View style={styles.resultsHeader}>
         <View style={styles.resultsInfo}>
-          <Text style={styles.resultsCount}>45,718 properties</Text>
-          <View style={styles.newBadge}>
+          <Text style={styles.resultsCount}>{filteredProperties.length} {filteredProperties.length === 1 ? 'property' : 'properties'}</Text>
+          {/* <View style={styles.newBadge}>
             <Text style={styles.newBadgeText}>1,130 new</Text>
-          </View>
+          </View> */}
         </View>
         <TouchableOpacity style={styles.featuredButton}>
           <Text style={styles.featuredButtonText}>Featured</Text>
@@ -232,7 +308,7 @@ const SearchScreen = () => {
 
       {/* Properties List */}
       <ScrollView style={styles.propertiesList} showsVerticalScrollIndicator={false}>
-        {properties.map((property) => (
+        {filteredProperties.map((property) => (
           <PropertyCard
             key={property.id}
             property={property}
@@ -244,10 +320,13 @@ const SearchScreen = () => {
           />
         ))}
 
-        <TouchableOpacity style={{ alignItems: 'center', padding: 4 }}>
-          <Text style={styles.specValue}>Load More...</Text>
-        </TouchableOpacity>
+        {filteredProperties.length === 0 && (
+          <View style={{ alignItems: "center", padding: 20 }}>
+            <Text>No properties found in this city</Text>
+          </View>
+        )}
       </ScrollView>
+
 
       {/* Filter Modal */}
       <FilterModal
@@ -255,9 +334,10 @@ const SearchScreen = () => {
         onClose={() => setShowFilterModal(false)}
         filters={filters}
         onFiltersChange={setFilters}
+        onPropertiesUpdate={handlePropertiesUpdate}
       />
 
-      <CategoryModal
+      {/* <CategoryModal
         visible={showCategoryModal}
         onClose={() => setShowCategoryModal(false)}
         selectedCategory={selectedCategory}
@@ -265,7 +345,7 @@ const SearchScreen = () => {
           setSelectedCategory(category);
           setShowCategoryModal(false);
         }}
-      />
+      /> */}
 
       <PropertyModal
         visible={showPropertyModal}
