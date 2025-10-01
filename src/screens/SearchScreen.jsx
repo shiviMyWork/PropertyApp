@@ -24,14 +24,14 @@ import PropertyCard from '../SearchScreenComponents/PropertyCard';
 const API_BASE = "https://pestosoft.in/";
 
 const API_ENDPOINTS = {
-  Buy: `${API_BASE}/api/properties/type/1`,   
-  Rent: `${API_BASE}/api/properties/type/2`, 
+  Buy: `${API_BASE}/api/properties/type/1`,
+  Rent: `${API_BASE}/api/properties/type/2`,
 };
 
 const SearchScreen = ({ route }) => {
   const navigation = useNavigation();
   const styles = useThemedStyles();
- 
+
   const handleNavigateToDetails = (property) => {
     navigation.navigate("PropertyDetails", { id: property.id });
   };
@@ -63,53 +63,53 @@ const SearchScreen = ({ route }) => {
   };
 
   const handleFilterTabPress = async (filter) => {
-  // If clicking the already selected Buy/Rent tab → deselect
-  if (selectedFilter === filter && (filter === "Buy" || filter === "Rent")) {
-    setSelectedFilter(""); // deselect tab
-    // Fetch default properties
-    try {
-      const res = await fetch(`${API_BASE}/api/properties`);
-      const data = await res.json();
-      setProperties(data);
-      console.log("Fetched Default Properties:", data);
-    } catch (err) {
-      console.error("Error fetching default properties:", err);
-    }
-    return;
-  }
-
-  setSelectedFilter(filter);
-
-  switch (filter) {
-    case "Buy":
-    case "Rent":
-      // Fetch Buy or Rent properties
+    // If clicking the already selected Buy/Rent tab → deselect
+    if (selectedFilter === filter && (filter === "Buy" || filter === "Rent")) {
+      setSelectedFilter(""); // deselect tab
+      // Fetch default properties
       try {
-        const res = await fetch(API_ENDPOINTS[filter]);
+        const res = await fetch(`${API_BASE}/api/properties`);
         const data = await res.json();
         setProperties(data);
-        console.log(`${filter} Properties:`, data);
+        console.log("Fetched Default Properties:", data);
       } catch (err) {
-        console.error(`Error fetching ${filter} properties:`, err);
+        console.error("Error fetching default properties:", err);
       }
-      break;
+      return;
+    }
 
-    case "Property":
-      setShowPropertyModal(true);
-      break;
-    case "Price":
-      setShowPriceModal(true);
-      break;
-    case "Beds & Baths":
-      setShowBedsAndBathsModal(true);
-      break;
-    case "Amenities":
-      setShowAmenitiesModal(true);
-      break;
-    default:
-      break;
-  }
-};
+    setSelectedFilter(filter);
+
+    switch (filter) {
+      case "Buy":
+      case "Rent":
+        // Fetch Buy or Rent properties
+        try {
+          const res = await fetch(API_ENDPOINTS[filter]);
+          const data = await res.json();
+          setProperties(data);
+          console.log(`${filter} Properties:`, data);
+        } catch (err) {
+          console.error(`Error fetching ${filter} properties:`, err);
+        }
+        break;
+
+      case "Property":
+        setShowPropertyModal(true);
+        break;
+      case "Price":
+        setShowPriceModal(true);
+        break;
+      case "Beds & Baths":
+        setShowBedsAndBathsModal(true);
+        break;
+      case "Amenities":
+        setShowAmenitiesModal(true);
+        break;
+      default:
+        break;
+    }
+  };
 
   const filterTabs = ['Buy', 'Rent', 'Property', 'Price', 'Beds & Baths', 'Amenities'];
 
@@ -154,84 +154,85 @@ const SearchScreen = ({ route }) => {
   //     .catch((err) => console.error("Error fetching properties:", err));
   // }, []);
 
-const { countryId, countryName } = route.params || {};
-console.log("Received Country ID:", countryId);
-console.log("Received Country Name:", countryName);
+  const { countryId, countryName } = route.params || {};
+  console.log("Received Country ID:", countryId);
+  console.log("Received Country Name:", countryName);
 
-useEffect(() => {
-  const fetchProperties = async () => {
-    try {
-      const endpoint = countryId
-        ? `${API_BASE}/api/properties/country/${countryId}` 
-        : `${API_BASE}/api/properties`;
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        const endpoint = countryId
+          ? `${API_BASE}/api/properties/country/${countryId}`
+          : `${API_BASE}/api/properties`;
 
-      console.log("Fetching from:", endpoint);
+        console.log("Fetching from:", endpoint);
 
-      const res = await fetch(endpoint);
+        const res = await fetch(endpoint);
 
-      if (!res.ok) {
-        const text = await res.text();
-        console.error("API returned error:", text);
-        return;
+        if (!res.ok) {
+          const text = await res.text();
+          console.error("API returned error:", text);
+          return;
+        }
+
+        const data = await res.json();
+        setProperties(data);
+        console.log("Fetched Properties:", data);
+      } catch (err) {
+        console.error("Error fetching properties:", err);
       }
+    };
 
-      const data = await res.json();
-      setProperties(data);
-      console.log("Fetched Properties:", data);
-    } catch (err) {
-      console.error("Error fetching properties:", err);
+    fetchProperties();
+  }, [countryId]);
+
+
+  const filteredProperties = properties.filter((property) => {
+    const text = searchText.toLowerCase();
+    const cityMatch = property.city?.toLowerCase().includes(text);
+    const carpetAreaMatch = property.carpet_area?.toString().toLowerCase().includes(text);
+
+    // 🛏️ Bedrooms filtering
+    const selectedBedrooms = bedsAndBaths.bedrooms || [];
+    let bedroomsMatch = true;
+    if (selectedBedrooms.length > 0) {
+      if (selectedBedrooms.includes("Studio")) {
+        bedroomsMatch = property.bedrooms === 0;
+      } else if (selectedBedrooms.includes("7+")) {
+        bedroomsMatch = property.bedrooms >= 7;
+      } else {
+        bedroomsMatch = selectedBedrooms.includes(property.bedrooms?.toString());
+      }
     }
-  };
 
-  fetchProperties();
-}, [countryId]);
-
-
-const filteredProperties = properties.filter((property) => {
-  const text = searchText.toLowerCase();
-  const cityMatch = property.city?.toLowerCase().includes(text);
-  const carpetAreaMatch = property.carpet_area?.toString().toLowerCase().includes(text);
-
-  // 🛏️ Bedrooms filtering
-  const selectedBedrooms = bedsAndBaths.bedrooms || [];
-  let bedroomsMatch = true;
-  if (selectedBedrooms.length > 0) {
-    if (selectedBedrooms.includes("Studio")) {
-      bedroomsMatch = property.bedrooms === 0;
-    } else if (selectedBedrooms.includes("7+")) {
-      bedroomsMatch = property.bedrooms >= 7;
-    } else {
-      bedroomsMatch = selectedBedrooms.includes(property.bedrooms?.toString());
+    // 🛁 Bathrooms filtering
+    const selectedBathrooms = bedsAndBaths.bathrooms || [];
+    let bathroomsMatch = true;
+    if (selectedBathrooms.length > 0) {
+      if (selectedBathrooms.includes("7+")) {
+        bathroomsMatch = property.bathrooms >= 7;
+      } else {
+        bathroomsMatch = selectedBathrooms.includes(property.bathrooms?.toString());
+      }
     }
-  }
 
-  // 🛁 Bathrooms filtering
-  const selectedBathrooms = bedsAndBaths.bathrooms || [];
-  let bathroomsMatch = true;
-  if (selectedBathrooms.length > 0) {
-    if (selectedBathrooms.includes("7+")) {
-      bathroomsMatch = property.bathrooms >= 7;
-    } else {
-      bathroomsMatch = selectedBathrooms.includes(property.bathrooms?.toString());
+
+    // 💰 Price filtering (using expected_price from API)
+    let priceMatch = true;
+    if (priceRange.min || priceRange.max) {
+      const min = priceRange.min ? parseFloat(priceRange.min) : 0;
+      const max = priceRange.max ? parseFloat(priceRange.max) : Infinity;
+
+      priceMatch = property.expected_price >= min && property.expected_price <= max;
     }
-  }
 
-  // 💰 Price filtering (using expected_price from API)
-  let priceMatch = true;
-  if (priceRange.min || priceRange.max) {
-    const min = priceRange.min ? parseInt(priceRange.min, 10) : 0;
-    const max = priceRange.max ? parseInt(priceRange.max, 10) : Infinity;
-
-    priceMatch = property.expected_price >= min && property.expected_price <= max;
-  }
-
-  // ✅ Apply all filters together
-  return (cityMatch || carpetAreaMatch) && bedroomsMatch && bathroomsMatch && priceMatch;
-});
+    // ✅ Apply all filters together
+    return (cityMatch || carpetAreaMatch) && bedroomsMatch && bathroomsMatch && priceMatch;
+  });
 
   const handlePropertiesUpdate = (newProperties) => {
-  setProperties(newProperties);
-};
+    setProperties(newProperties);
+  };
 
   const handleCall = (phoneNumber) => {
     Linking.openURL(`tel:${phoneNumber}`);

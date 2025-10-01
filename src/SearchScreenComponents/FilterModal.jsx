@@ -138,8 +138,8 @@ const FilterModal = ({ visible, onClose, filters, onFiltersChange, onPropertiesU
       }
 
       if (activeFilters.minPrice || activeFilters.maxPrice) {
-        const min = activeFilters.minPrice ? parseInt(activeFilters.minPrice, 10) : 0;
-        const max = activeFilters.maxPrice ? parseInt(activeFilters.maxPrice, 10) : Infinity;
+        const min = activeFilters.minPrice ? parseFloat(activeFilters.minPrice) : 0;
+        const max = activeFilters.maxPrice ? parseFloat(activeFilters.maxPrice) : Infinity;
         filteredData = filteredData.filter(property =>
           property.expected_price >= min && property.expected_price <= max
         );
@@ -495,7 +495,7 @@ const FilterModal = ({ visible, onClose, filters, onFiltersChange, onPropertiesU
                     onChangeText={(text) => handleSizeChange('minSize', text)}
                     keyboardType="numeric"
                   />
-                 
+
                 </View>
                 <Text style={styles.sizeSeparator}>to</Text>
                 <View style={styles.sizeInputContainer}>
@@ -507,7 +507,7 @@ const FilterModal = ({ visible, onClose, filters, onFiltersChange, onPropertiesU
                     onChangeText={(text) => handleSizeChange('maxSize', text)}
                     keyboardType="numeric"
                   />
-                 
+
                 </View>
               </View>
             </View>
