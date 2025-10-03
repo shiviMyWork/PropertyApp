@@ -100,6 +100,35 @@ const AccountScreen = () => {
       return;
     }
 
+    if (item === 'Find an Agent') {
+      navigation.navigate('WebViewScreen', {
+        url: 'https://www.google.com/',
+        title: 'Find an Agent',
+      });
+      return;
+    }
+    if (item === 'Rent vs Buy Calculator') {
+      navigation.navigate('WebViewScreen', {
+        url: 'https://www.google.com/',
+        title: 'Rent vs Buy Calculator',
+      });
+      return;
+    }
+    if (item === 'Mortgage Calculator') {
+      navigation.navigate('WebViewScreen', {
+        url: 'https://www.google.com/',
+        title: 'Mortgage Calculator',
+      });
+      return;
+    }
+    if (item === 'Find Developers') {
+      navigation.navigate('WebViewScreen', {
+        url: 'https://www.google.com/',
+        title: 'Find Developers',
+      });
+      return;
+    }
+
     setPressedItem(item);
     setTimeout(() => setPressedItem(null), 150);
   };
@@ -345,28 +374,28 @@ const AccountScreen = () => {
               title="Find an Agent"
               subtitle="Connect with local experts"
               icon="🏢"
-              onPress={() => Linking.openURL('https://yourwebsite.com/find-agent')}
+              onPress={handlePress}
             />
             <View style={[styles.separator, dynamicStyles.separator]} />
             <MenuRow
               title="Rent vs Buy Calculator"
               subtitle="Compare renting and buying costs"
               icon="⚖️"
-              onPress={() => Linking.openURL('https://yourwebsite.com/find-agent')}
+              onPress={handlePress}
             />
             <View style={[styles.separator, dynamicStyles.separator]} />
             <MenuRow
               title="Mortgage Calculator"
               subtitle="Estimate your monthly payments"
               icon="🧮"
-              onPress={() => Linking.openURL('https://yourwebsite.com/find-agent')}
+              onPress={handlePress}
             />
             <View style={[styles.separator, dynamicStyles.separator]} />
             <MenuRow
               title="Find Developers"
               subtitle="Discover property developers"
               icon="🏗️"
-              onPress={() => Linking.openURL('https://yourwebsite.com/find-agent')}
+              onPress={handlePress}
             />
           </View>
         </View>

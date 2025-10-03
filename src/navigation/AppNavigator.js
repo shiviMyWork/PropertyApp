@@ -16,6 +16,7 @@ import SavedScreen from "../screens/SavedScreen";
 import PropertyDetailsScreen from "../screens/PropertyDetailsScreen";
 import AboutUs from "../AccountScreenComponents/AboutUs";
 import Notifications from "../AccountScreenComponents/Notifications";
+import WebViewScreen from "../screens/WebViewScreen";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -85,6 +86,7 @@ export default function AppNavigator() {
         component={Notifications}
         options={{ headerShown: false }} 
       />
+      <Stack.Screen name="WebViewScreen" component={WebViewScreen} />
     </Stack.Navigator>
   );
 }

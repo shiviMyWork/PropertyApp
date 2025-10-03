@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from "@react-navigation/native";
 import { useThemedStyles } from '../SearchScreenComponents/styles';
+import { RefreshControl } from "react-native";
 
 import FilterModal from '../SearchScreenComponents/FilterModal';
 import CategoryModal from '../SearchScreenComponents/CategoryModal';
@@ -31,6 +32,8 @@ const API_ENDPOINTS = {
 const SearchScreen = ({ route }) => {
   const navigation = useNavigation();
   const styles = useThemedStyles();
+  const [refreshing, setRefreshing] = useState(false);
+
 
   const handleNavigateToDetails = (property) => {
     navigation.navigate("PropertyDetails", { id: property.id });
@@ -157,6 +160,32 @@ const SearchScreen = ({ route }) => {
   const { countryId, countryName, selectedMeasurement = 'Imperial (ft², mi)' } = route.params || {};
   console.log("Received Country ID:", countryId);
   console.log("Received Country Name:", countryName);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+
+    try {
+      // Reset filters
+      setSearchText('');
+      setSelectedFilter('');
+      setSelectedCategory('');
+      setSelectedProperties([]);
+      setPriceRange({ min: '', max: '', selected: '' });
+      setBedsAndBaths({ bedrooms: [], bathrooms: [] });
+      setSelectedAmenities([]);
+
+      // Fetch all properties (no country filter)
+      const res = await fetch(`${API_BASE}/api/properties`);
+      const data = await res.json();
+      setProperties(data);
+      console.log("Refreshed All Properties:", data);
+    } catch (err) {
+      console.error("Error refreshing properties:", err);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
 
   useEffect(() => {
     const fetchProperties = async () => {
@@ -318,13 +347,15 @@ const SearchScreen = ({ route }) => {
       </View>
 
       {/* Properties List */}
-      <ScrollView style={styles.propertiesList} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.propertiesList} showsVerticalScrollIndicator={false} refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }>
         {filteredProperties.map((property) => (
           <PropertyCard
             key={property.id}
             property={{
               ...property,
-              carpet_area: convertArea(property.carpet_area)  
+              carpet_area: convertArea(property.carpet_area)
             }}
             onCall={handleCall}
             onWhatsApp={handleWhatsApp}

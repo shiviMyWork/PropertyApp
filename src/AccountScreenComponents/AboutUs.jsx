@@ -7,71 +7,82 @@ import {
   StatusBar,
   Linking,
   Alert,
+  useColorScheme,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from 'react-native-paper';
 
 const AboutScreen = () => {
   const navigation = useNavigation();
+  const theme = useTheme(); 
+  const scheme = useColorScheme(); 
 
-  const openURL = async (url) => {
-    try {
-      const supported = await Linking.canOpenURL(url);
-      if (supported) {
-        await Linking.openURL(url);
-      } else {
-        Alert.alert('Error', `Cannot open URL: ${url}`);
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to open the link');
-      console.error('Error opening URL:', error);
-    }
-  };
+  const isDark = scheme === 'dark';
 
   const handleTermsPress = () => {
-    openURL('http://localhost:5173/termsandconditions');
-  };
+  navigation.navigate('WebViewScreen', {
+    url: 'https://www.google.com/',
+    title: 'Terms of Use',
+  });
+};
 
-  const handlePrivacyPress = () => {
-    openURL('http://localhost:5173/privacypolicy');
-  };
+const handlePrivacyPress = () => {
+  navigation.navigate('WebViewScreen', {
+    url: 'https://www.google.com/',
+    title: 'Privacy Policy',
+  });
+};
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      
+    <SafeAreaView
+      style={[
+        styles.container,
+        { backgroundColor: theme.colors.background },
+      ]}>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={theme.colors.background}
+      />
+
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: theme.colors.background }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}>
-          <Icon name="arrow-back" size={24} color="#000" />
+          <Icon name="arrow-back" size={24} color={theme.colors.onBackground} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>About</Text>
+        <Text style={[styles.headerTitle, { color: theme.colors.onBackground }]}>
+          About
+        </Text>
       </View>
 
       {/* Menu Items */}
       <View style={styles.content}>
         <TouchableOpacity
-          style={styles.menuItem}
+          style={[styles.menuItem, { backgroundColor: theme.colors.background }]}
           onPress={handleTermsPress}
           activeOpacity={0.7}>
-          <Text style={styles.menuText}>Terms of Use</Text>
-          <Icon name="chevron-right" size={24} color="#666" />
+          <Text style={[styles.menuText, { color: theme.colors.onBackground }]}>
+            Terms of Use
+          </Text>
+          <Icon name="chevron-right" size={24} color={theme.colors.onSurface} />
         </TouchableOpacity>
 
-        <View style={styles.separator} />
+        <View style={[styles.separator, { backgroundColor: theme.colors.outline }]} />
 
         <TouchableOpacity
-          style={styles.menuItem}
+          style={[styles.menuItem, { backgroundColor: theme.colors.background }]}
           onPress={handlePrivacyPress}
           activeOpacity={0.7}>
-          <Text style={styles.menuText}>Privacy Policy</Text>
-          <Icon name="chevron-right" size={24} color="#666" />
+          <Text style={[styles.menuText, { color: theme.colors.onBackground }]}>
+            Privacy Policy
+          </Text>
+          <Icon name="chevron-right" size={24} color={theme.colors.onSurface} />
         </TouchableOpacity>
 
-        <View style={styles.separator} />
+        <View style={[styles.separator, { backgroundColor: theme.colors.outline }]} />
       </View>
     </SafeAreaView>
   );
@@ -80,14 +91,12 @@ const AboutScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: '#fff',
   },
   backButton: {
     padding: 4,
@@ -95,8 +104,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: '400',
-    color: '#000',
+    fontWeight: '500',
   },
   content: {
     flex: 1,
@@ -108,16 +116,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 28,
     paddingVertical: 20,
-    backgroundColor: '#fff',
   },
   menuText: {
     fontSize: 16,
-    color: '#000',
     fontWeight: '400',
   },
   separator: {
     height: 1,
-    backgroundColor: '#e0e0e0',
     marginLeft: 28,
   },
 });
