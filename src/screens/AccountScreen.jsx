@@ -11,6 +11,7 @@ import {
   useColorScheme,
   Modal,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from 'react-native-paper';
@@ -23,11 +24,19 @@ const AccountScreen = () => {
   const [pressedItem, setPressedItem] = useState(null);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showCountryModal, setShowCountryModal] = useState(false);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showImprovementModal, setShowImprovementModal] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('English (US)');
   const [selectedCountry, setSelectedCountry] = useState('');
   const [countries, setCountries] = useState([]);
   const [loadingCountries, setLoadingCountries] = useState(false);
   const [countryError, setCountryError] = useState(null);
+  const [selectedRating, setSelectedRating] = useState(0);
+  const [hoveredRating, setHoveredRating] = useState(0);
+  const [selectedMeasurement, setSelectedMeasurement] = useState('Imperial (ft², mi)');
+  const [showMeasurementModal, setShowMeasurementModal] = useState(false);
+  const [showPropertyCard, setShowPropertyCard] = useState(true);
   const theme = useTheme();
   const scheme = useColorScheme();
 
@@ -66,6 +75,31 @@ const AccountScreen = () => {
       return;
     }
 
+    if (item === 'Rate Us') {
+      setShowRatingModal(true);
+      return;
+    }
+
+    if (item === 'Need help?') {
+      setShowHelpModal(true);
+      return;
+    }
+
+    if (item === 'About') {
+      navigation.navigate('About');
+      return;
+    }
+
+    if (item === 'Notifications') {
+      navigation.navigate('Notifications');
+      return;
+    }
+
+    if (item === 'Measurement') {
+      setShowMeasurementModal(true);
+      return;
+    }
+
     setPressedItem(item);
     setTimeout(() => setPressedItem(null), 150);
   };
@@ -74,7 +108,6 @@ const AccountScreen = () => {
     setSelectedLanguage(language);
     setShowLanguageModal(false);
   };
-
 
   const handleCountrySelect = (country) => {
     const selectedId = country.id;
@@ -86,6 +119,61 @@ const AccountScreen = () => {
     navigation.navigate("Search", {
       countryId: selectedId,
       countryName: selectedName,
+    });
+  };
+
+  const handleMeasurementSelect = (measurement) => {
+    setSelectedMeasurement(measurement);
+    setShowMeasurementModal(false);
+
+    // Navigate to SearchScreen with measurement
+    navigation.navigate('Search', {
+      selectedMeasurement: measurement
+    });
+  };
+
+  const handleRatingSelect = (rating) => {
+    setSelectedRating(rating);
+    // You can add your rating submission logic here
+    console.log(`User rated: ${rating} stars`);
+
+    // Optional: Add API call to submit rating
+    // submitRating(rating);
+
+    setTimeout(() => {
+      setShowRatingModal(false);
+      // Optionally reset the rating after submission
+      // setSelectedRating(0);
+    }, 500);
+  };
+
+  const handleReportBug = () => {
+    setShowHelpModal(false);
+    const email = 'support@propmatez.com'; // Replace with your support email
+    const subject = 'Bug Report - PROPMATEZ App';
+    const body = 'Please describe the bug you encountered:\n\n';
+    const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    Linking.openURL(mailtoUrl).catch(err => {
+      console.error('Failed to open email app:', err);
+      // You can show an alert here if needed
+    });
+  };
+
+  const handleSuggestImprovement = () => {
+    setShowHelpModal(false);
+    setShowImprovementModal(true);
+  };
+
+  const handleImprovementOptionSelect = (option) => {
+    setShowImprovementModal(false);
+    const email = 'support@propmatez.com'; // Replace with your support email
+    const subject = `Improvement Suggestion - ${option}`;
+    const body = `I would like to suggest an improvement for ${option}:\n\n`;
+    const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+    Linking.openURL(mailtoUrl).catch(err => {
+      console.error('Failed to open email app:', err);
     });
   };
 
@@ -186,28 +274,34 @@ const AccountScreen = () => {
         </View>
 
         {/* Property Listing Promotion */}
-        <View style={styles.propertyCard}>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => handlePress('close')}
-          >
-            <Text style={styles.closeText}>✕</Text>
-          </TouchableOpacity>
-          <View style={styles.propertyContent}>
-            <View style={styles.propertyTextSection}>
-              <Text style={styles.propertyTitle}>Want to list your property with us?</Text>
-              <TouchableOpacity
-                style={styles.getStartedButton}
-                onPress={() => handlePress('get started')}
-              >
-                <Text style={styles.getStartedText}>Get Started</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.houseIllustration}>
-              <Text style={styles.houseEmoji}>🏡</Text>
+        {showPropertyCard && (
+          <View style={styles.propertyCard}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => {
+                console.log('Close button pressed');
+                setShowPropertyCard(false);
+              }}
+
+            >
+              <Text style={styles.closeText}>✕</Text>
+            </TouchableOpacity>
+            <View style={styles.propertyContent}>
+              <View style={styles.propertyTextSection}>
+                <Text style={styles.propertyTitle}>Want to list your property with us?</Text>
+                <TouchableOpacity
+                  style={styles.getStartedButton}
+                  onPress={() => handlePress('get started')}
+                >
+                  <Text style={styles.getStartedText}>Get Started</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.houseIllustration}>
+                <Text style={styles.houseEmoji}>🏡</Text>
+              </View>
             </View>
           </View>
-        </View>
+        )}
 
         {/* Settings Section */}
         <View style={styles.section}>
@@ -229,7 +323,7 @@ const AccountScreen = () => {
             <View style={[styles.separator, dynamicStyles.separator]} />
             <MenuRow
               title="Measurement"
-              subtitle="Imperial (ft², mi)"
+              subtitle={selectedMeasurement}
               icon="📏"
               onPress={handlePress}
             />
@@ -248,24 +342,31 @@ const AccountScreen = () => {
           <Text style={[styles.sectionTitle, dynamicStyles.primaryText]}>Real Estate Services</Text>
           <View style={[styles.menuContainer, dynamicStyles.cardBackground]}>
             <MenuRow
-              title="Find a Broker"
+              title="Find an Agent"
               subtitle="Connect with local experts"
               icon="🏢"
-              onPress={handlePress}
+              onPress={() => Linking.openURL('https://yourwebsite.com/find-agent')}
             />
             <View style={[styles.separator, dynamicStyles.separator]} />
             <MenuRow
-              title="Market Insights"
-              subtitle="Trends and analytics"
-              icon="📊"
-              onPress={handlePress}
+              title="Rent vs Buy Calculator"
+              subtitle="Compare renting and buying costs"
+              icon="⚖️"
+              onPress={() => Linking.openURL('https://yourwebsite.com/find-agent')}
             />
             <View style={[styles.separator, dynamicStyles.separator]} />
             <MenuRow
               title="Mortgage Calculator"
-              subtitle="Estimate your payments"
+              subtitle="Estimate your monthly payments"
               icon="🧮"
-              onPress={handlePress}
+              onPress={() => Linking.openURL('https://yourwebsite.com/find-agent')}
+            />
+            <View style={[styles.separator, dynamicStyles.separator]} />
+            <MenuRow
+              title="Find Developers"
+              subtitle="Discover property developers"
+              icon="🏗️"
+              onPress={() => Linking.openURL('https://yourwebsite.com/find-agent')}
             />
           </View>
         </View>
@@ -275,23 +376,23 @@ const AccountScreen = () => {
           <Text style={[styles.sectionTitle, dynamicStyles.primaryText]}>Support</Text>
           <View style={[styles.menuContainer, dynamicStyles.cardBackground]}>
             <MenuRow
-              title="Help Center"
-              subtitle="FAQs and guides"
-              icon="❓"
-              onPress={handlePress}
-            />
-            <View style={[styles.separator, dynamicStyles.separator]} />
-            <MenuRow
-              title="Contact Us"
-              subtitle="Get in touch"
-              icon="📞"
-              onPress={handlePress}
-            />
-            <View style={[styles.separator, dynamicStyles.separator]} />
-            <MenuRow
               title="About"
               subtitle="Learn more about us"
               icon="ℹ️"
+              onPress={handlePress}
+            />
+            <View style={[styles.separator, dynamicStyles.separator]} />
+            <MenuRow
+              title="Rate Us"
+              subtitle="Share your feedback"
+              icon="⭐"
+              onPress={handlePress}
+            />
+            <View style={[styles.separator, dynamicStyles.separator]} />
+            <MenuRow
+              title="Need help?"
+              subtitle="Get support and assistance"
+              icon="❓"
               onPress={handlePress}
             />
           </View>
@@ -368,6 +469,80 @@ const AccountScreen = () => {
                 <TouchableOpacity
                   style={styles.cancelButton}
                   onPress={() => setShowLanguageModal(false)}
+                >
+                  <Text style={styles.cancelText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Measurement Selection Modal */}
+      <Modal
+        visible={showMeasurementModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowMeasurementModal(false)}
+      >
+        <TouchableOpacity
+          style={[styles.modalOverlay, dynamicStyles.modalOverlay]}
+          activeOpacity={1}
+          onPress={() => setShowMeasurementModal(false)}
+        >
+          <View style={styles.modalContainer}>
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+            >
+              <View style={[styles.modalContent, dynamicStyles.modalContent]}>
+                <Text style={[styles.modalTitle, dynamicStyles.modalTitle]}>Select Measurement</Text>
+
+                <TouchableOpacity
+                  style={[
+                    styles.languageOption,
+                    selectedMeasurement === 'Metric (m², km)' && styles.selectedOption
+                  ]}
+                  onPress={() => handleMeasurementSelect('Metric (m², km)')}
+                >
+                  <Text style={styles.languageIcon}>📐</Text>
+                  <Text style={[
+                    styles.languageText,
+                    dynamicStyles.primaryText,
+                    selectedMeasurement === 'Metric (m², km)' && styles.selectedText
+                  ]}>
+                    Metric (m², km)
+                  </Text>
+                  {selectedMeasurement === 'Metric (m², km)' && (
+                    <Text style={styles.checkmark}>✓</Text>
+                  )}
+                </TouchableOpacity>
+
+                <View style={[styles.modalSeparator, dynamicStyles.separator]} />
+
+                <TouchableOpacity
+                  style={[
+                    styles.languageOption,
+                    selectedMeasurement === 'Imperial (ft², mi)' && styles.selectedOption
+                  ]}
+                  onPress={() => handleMeasurementSelect('Imperial (ft², mi)')}
+                >
+                  <Text style={styles.languageIcon}>📏</Text>
+                  <Text style={[
+                    styles.languageText,
+                    dynamicStyles.primaryText,
+                    selectedMeasurement === 'Imperial (ft², mi)' && styles.selectedText
+                  ]}>
+                    Imperial (ft², mi)
+                  </Text>
+                  {selectedMeasurement === 'Imperial (ft², mi)' && (
+                    <Text style={styles.checkmark}>✓</Text>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => setShowMeasurementModal(false)}
                 >
                   <Text style={styles.cancelText}>Cancel</Text>
                 </TouchableOpacity>
@@ -455,6 +630,222 @@ const AccountScreen = () => {
                   onPress={() => setShowCountryModal(false)}
                 >
                   <Text style={styles.cancelText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Rating Modal */}
+      <Modal
+        visible={showRatingModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowRatingModal(false)}
+      >
+        <TouchableOpacity
+          style={[styles.modalOverlay, dynamicStyles.modalOverlay]}
+          activeOpacity={1}
+          onPress={() => setShowRatingModal(false)}
+        >
+          <View style={styles.modalContainer}>
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+            >
+              <View style={[styles.modalContent, dynamicStyles.modalContent, styles.ratingModalContent]}>
+                {/* Illustration */}
+                <View style={styles.ratingIllustration}>
+                  <View style={styles.ratingImageContainer}>
+                    <Text style={styles.ratingEmoji}>📱</Text>
+                    <View style={styles.reviewBubble}>
+                      <Text style={styles.reviewStars}>⭐⭐⭐⭐⭐</Text>
+                    </View>
+                  </View>
+                  <View style={styles.ratingPeople}>
+                    <Text style={styles.personEmoji}>👤</Text>
+                    <Text style={styles.personEmoji}>👤</Text>
+                  </View>
+                </View>
+
+                <Text style={[styles.ratingModalTitle, dynamicStyles.modalTitle]}>
+                  Enjoying PROPMATEZ?
+                </Text>
+                <Text style={[styles.ratingModalSubtitle, dynamicStyles.secondaryText]}>
+                  Rate us and let us know what you think
+                </Text>
+
+                {/* Star Rating */}
+                <View style={styles.starsContainer}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <TouchableOpacity
+                      key={star}
+                      onPress={() => handleRatingSelect(star)}
+                      style={styles.starButton}
+                    >
+                      <Text style={[
+                        styles.starIcon,
+                        selectedRating >= star && styles.starIconSelected
+                      ]}>
+                        {selectedRating >= star ? '⭐' : '☆'}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Star Labels */}
+                <View style={styles.starLabelsContainer}>
+                  <Text style={[styles.starLabel, dynamicStyles.secondaryText]}>Terrible</Text>
+                  <Text style={[styles.starLabel, dynamicStyles.secondaryText]}>Bad</Text>
+                  <Text style={[styles.starLabel, dynamicStyles.secondaryText]}>Okay</Text>
+                  <Text style={[styles.starLabel, dynamicStyles.secondaryText]}>Good</Text>
+                  <Text style={[styles.starLabel, dynamicStyles.secondaryText]}>Great</Text>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.rateLaterButton}
+                  onPress={() => setShowRatingModal(false)}
+                >
+                  <Text style={styles.rateLaterText}>Rate later</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Help Modal */}
+      <Modal
+        visible={showHelpModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowHelpModal(false)}
+      >
+        <TouchableOpacity
+          style={[styles.modalOverlay, dynamicStyles.modalOverlay]}
+          activeOpacity={1}
+          onPress={() => setShowHelpModal(false)}
+        >
+          <View style={styles.modalContainer}>
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+            >
+              <View style={[styles.modalContent, dynamicStyles.modalContent, styles.helpModalContent]}>
+                <Text style={[styles.helpModalTitle, dynamicStyles.modalTitle]}>Need help?</Text>
+
+                <TouchableOpacity
+                  style={styles.helpOption}
+                  onPress={() => {
+                    handleReportBug();
+                  }}
+                >
+                  <View style={styles.helpIconContainer}>
+                    <Text style={styles.helpIcon}>🐛</Text>
+                  </View>
+                  <View style={styles.helpTextContainer}>
+                    <Text style={[styles.helpOptionTitle, dynamicStyles.primaryText]}>
+                      Report a bug
+                    </Text>
+                    <Text style={[styles.helpOptionSubtitle, dynamicStyles.secondaryText]}>
+                      Something in the app is broken or doesn't work as expected
+                    </Text>
+                  </View>
+                  <View style={styles.helpArrowContainer}>
+                    <Text style={[styles.arrow, dynamicStyles.arrow]}>›</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <View style={[styles.helpSeparator, dynamicStyles.separator]} />
+
+                <TouchableOpacity
+                  style={styles.helpOption}
+                  onPress={() => {
+                    handleSuggestImprovement();
+                  }}
+                >
+                  <View style={styles.helpIconContainer}>
+                    <Text style={styles.helpIcon}>📣</Text>
+                  </View>
+                  <View style={styles.helpTextContainer}>
+                    <Text style={[styles.helpOptionTitle, dynamicStyles.primaryText]}>
+                      Suggest an improvement
+                    </Text>
+                    <Text style={[styles.helpOptionSubtitle, dynamicStyles.secondaryText]}>
+                      New ideas or desired enhancements for this app
+                    </Text>
+                  </View>
+                  <View style={styles.helpArrowContainer}>
+                    <Text style={[styles.arrow, dynamicStyles.arrow]}>›</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.helpCancelButton}
+                  onPress={() => setShowHelpModal(false)}
+                >
+                  <Text style={styles.helpCancelText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Improvement Selection Modal */}
+      <Modal
+        visible={showImprovementModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowImprovementModal(false)}
+      >
+        <TouchableOpacity
+          style={[styles.modalOverlay, dynamicStyles.modalOverlay]}
+          activeOpacity={1}
+          onPress={() => setShowImprovementModal(false)}
+        >
+          <View style={styles.modalContainer}>
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+            >
+              <View style={[styles.modalContent, dynamicStyles.modalContent, styles.improvementModalContent]}>
+                <Text style={[styles.improvementModalTitle, dynamicStyles.modalTitle]}>Suggest an improvement</Text>
+
+                <ScrollView style={styles.improvementList} showsVerticalScrollIndicator={true}>
+                  {[
+                    { label: 'Search results', icon: '🔍' },
+                    { label: 'Filters', icon: '⚙️' },
+                    { label: 'Property details', icon: '🏠' },
+                    { label: 'Map', icon: '🗺️' },
+                    { label: 'Login/Account', icon: '👤' },
+                    { label: 'Saved properties', icon: '❤️' },
+                    { label: 'Saved search alert', icon: '🔔' },
+                    { label: 'Contacted properties', icon: '📞' },
+                    { label: 'Darkmode', icon: '🌙' },
+                  ].map((item, index, array) => (
+                    <View key={index}>
+                      <TouchableOpacity
+                        style={styles.improvementOption}
+                        onPress={() => handleImprovementOptionSelect(item.label)}
+                      >
+                        <Text style={[styles.improvementOptionText, dynamicStyles.primaryText]}>
+                          {item.label}
+                        </Text>
+                      </TouchableOpacity>
+                      {index < array.length - 1 && (
+                        <View style={[styles.improvementSeparator, dynamicStyles.separator]} />
+                      )}
+                    </View>
+                  ))}
+                </ScrollView>
+
+                <TouchableOpacity
+                  style={styles.improvementCancelButton}
+                  onPress={() => setShowImprovementModal(false)}
+                >
+                  <Text style={styles.improvementCancelText}>Cancel</Text>
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
@@ -551,6 +942,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   propertyCard: {
+    pointerEvents: 'box-none',
     backgroundColor: '#cdc8e8',
     marginHorizontal: 20,
     marginBottom: 20,
@@ -576,6 +968,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#0b154f',
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 999,
+    elevation: 10,
   },
   closeText: {
     color: '#ffffff',
@@ -816,6 +1210,191 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     paddingHorizontal: 20,
+  },
+  // Rating Modal Styles
+  ratingModalContent: {
+    paddingVertical: 30,
+    paddingHorizontal: 24,
+  },
+  ratingIllustration: {
+    alignItems: 'center',
+    marginBottom: 24,
+    position: 'relative',
+  },
+  ratingImageContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  ratingEmoji: {
+    fontSize: 80,
+    marginBottom: 8,
+  },
+  reviewBubble: {
+    backgroundColor: '#e3f2fd',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    position: 'absolute',
+    top: 10,
+    right: -20,
+  },
+  reviewStars: {
+    fontSize: 12,
+  },
+  ratingPeople: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 20,
+  },
+  personEmoji: {
+    fontSize: 40,
+  },
+  ratingModalTitle: {
+    fontSize: 20,
+    fontWeight: '500',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  ratingModalSubtitle: {
+    fontSize: 15,
+    textAlign: 'center',
+    marginBottom: 32,
+    lineHeight: 22,
+  },
+  starsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 8,
+  },
+  starButton: {
+    padding: 4,
+  },
+  starIcon: {
+    fontSize: 36,
+  },
+  starIconSelected: {
+    transform: [{ scale: 1.1 }],
+  },
+  starLabelsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+    paddingHorizontal: 8,
+  },
+  starLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  rateLaterButton: {
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  rateLaterText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#5e35b1',
+  },
+  // Help Modal Styles
+  helpModalContent: {
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+  },
+  helpModalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 20,
+    textAlign: 'left',
+  },
+  helpOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  helpIconContainer: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  helpIcon: {
+    fontSize: 24,
+  },
+  helpTextContainer: {
+    flex: 1,
+  },
+  helpOptionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  helpOptionSubtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  helpArrowContainer: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  helpSeparator: {
+    height: 1,
+    marginVertical: 12,
+  },
+  helpCancelButton: {
+    marginTop: 20,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  helpCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#5e35b1',
+  },
+  // Improvement Modal Styles
+  improvementModalContent: {
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    maxHeight: '100%',
+  },
+  improvementModalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 20,
+    textAlign: 'left',
+  },
+  improvementList: {
+    maxHeight: 400,
+  },
+  improvementOption: {
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+  },
+  improvementOptionText: {
+    fontSize: 16,
+    fontWeight: '400',
+  },
+  improvementSeparator: {
+    height: 1,
+  },
+  improvementCancelButton: {
+    marginTop: 20,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  improvementCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#5e35b1',
   },
 });
 

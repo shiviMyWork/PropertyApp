@@ -14,6 +14,8 @@ import SearchScreen from "../screens/SearchScreen";
 import AccountScreen from "../screens/AccountScreen";
 import SavedScreen from "../screens/SavedScreen";
 import PropertyDetailsScreen from "../screens/PropertyDetailsScreen";
+import AboutUs from "../AccountScreenComponents/AboutUs";
+import Notifications from "../AccountScreenComponents/Notifications";
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -73,6 +75,16 @@ export default function AppNavigator() {
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="Search" component={HomeTabs} />
       <Stack.Screen name="PropertyDetails" component={PropertyDetailsScreen} />
+      <Stack.Screen
+        name="About"
+        component={AboutUs}
+        options={{ headerShown: false }} 
+      />
+      <Stack.Screen
+        name="Notifications"
+        component={Notifications}
+        options={{ headerShown: false }} 
+      />
     </Stack.Navigator>
   );
 }

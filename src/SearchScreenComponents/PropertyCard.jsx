@@ -13,6 +13,8 @@ const API_BASE = "https://pestosoft.in/";
 const PropertyCard = ({ property, onPress, onCall, onWhatsApp, isFavorite, onToggleFavorite }) => {
   const styles = useThemedStyles();
 
+  
+
   return (
     <TouchableOpacity onPress={onPress}>
       <View style={styles.propertyCard}>
@@ -50,7 +52,7 @@ const PropertyCard = ({ property, onPress, onCall, onWhatsApp, isFavorite, onTog
             </View>
             <View style={styles.specItem}>
               <Text style={styles.specLabel}>Area</Text>
-              <Text style={styles.specValue}>{property.carpet_area} Sqft</Text>
+              <Text style={styles.specValue}>{property.carpet_area}</Text>
             </View>
           </View>
 

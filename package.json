@@ -29,7 +29,7 @@
     "react-native-image-viewing": "^0.2.2",
     "react-native-paper": "^5.14.5",
     "react-native-picker-select": "^9.3.1",
-    "react-native-reanimated": "^4.0.0",
+    "react-native-reanimated": "^4.0.2",
     "react-native-safe-area-context": "^5.5.2",
     "react-native-screens": "^4.13.1",
     "react-native-sms-retriever": "^1.1.1",

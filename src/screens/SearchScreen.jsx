@@ -154,7 +154,7 @@ const SearchScreen = ({ route }) => {
   //     .catch((err) => console.error("Error fetching properties:", err));
   // }, []);
 
-  const { countryId, countryName } = route.params || {};
+  const { countryId, countryName, selectedMeasurement = 'Imperial (ft², mi)' } = route.params || {};
   console.log("Received Country ID:", countryId);
   console.log("Received Country Name:", countryName);
 
@@ -242,6 +242,16 @@ const SearchScreen = ({ route }) => {
     Linking.openURL(`whatsapp://send?phone=${phoneNumber}`);
   };
 
+  const convertArea = (carpetArea) => {
+    if (!carpetArea) return 'N/A';
+
+    if (selectedMeasurement === 'Metric (m², km)') {
+      const areaInMeters = (carpetArea * 0.092903).toFixed(2);
+      return `${areaInMeters} m²`;
+    }
+
+    return `${carpetArea} Sqft`;
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -312,7 +322,10 @@ const SearchScreen = ({ route }) => {
         {filteredProperties.map((property) => (
           <PropertyCard
             key={property.id}
-            property={property}
+            property={{
+              ...property,
+              carpet_area: convertArea(property.carpet_area)  
+            }}
             onCall={handleCall}
             onWhatsApp={handleWhatsApp}
             isFavorite={favorites.includes(property.id)}
